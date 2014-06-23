@@ -9,7 +9,7 @@
 #import "InstagramCell.h"
 #import <QuartzCore/QuartzCore.h>
 @implementation InstagramCell
-@synthesize descriptionLabel, username, profile_picture_image_view, main_picture_view, photo_likes, time, caption_username, image_caption, small_chat, small_heart, clock_view, header, comments_count, comments_text, foot, like, foot_comment;
+@synthesize descriptionLabel, username, profile_picture_image_view, main_picture_view, photo_likes, time, caption_username, image_caption, small_chat, small_heart, clock_view, header, comments_count, comments_text, foot, like, foot_comment, media_id;
 - (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
 {
     self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
@@ -47,10 +47,12 @@
         
         image_caption.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:14.5f];
         image_caption.userInteractionEnabled = NO;
+        [image_caption setBackgroundColor:[UIColor clearColor]];
         [self addSubview:image_caption];
         [self addSubview:photo_likes];
         
         main_picture_view = [[UIImageView alloc] initWithFrame:CGRectMake(0, 56, screenWidth, 320)];
+        [main_picture_view setBackgroundColor:[UIColor clearColor]];
         [self addSubview:main_picture_view];
         
         profile_picture_image_view = [[UIImageView alloc] initWithFrame:CGRectMake(5, 10, 32, 32)];
@@ -78,7 +80,7 @@
         comments_text.font = [UIFont fontWithName:@"Arial-BoldMT" size:13.0f];
         comments_text.textColor = [UIColor lightGrayColor];
         comments_text.userInteractionEnabled = NO;
-        
+        [comments_text setBackgroundColor:[UIColor clearColor]];
         [self addSubview:comments_text];
 
         
@@ -127,7 +129,7 @@
         [header setAlpha:0.9];
         [self addSubview:header];
         
-        
+        media_id = [[NSString alloc] init];
         
     }
     

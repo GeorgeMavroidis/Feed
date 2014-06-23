@@ -9,11 +9,15 @@
 #import "TwitterCell.h"
 
 @implementation TwitterCell
-@synthesize profile_picture_image_view, username,  time_label, retweets, favorites, tweet, interact_footer;
+@synthesize profile_picture_image_view, username,  time_label, retweets, favorites, tweet, interact_footer, twitter_media_id, fav_image, favorited, retweet_image, retweeted, reply_image, optionalImage, original_twitter_media_id;
 - (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
 {
     self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
     if (self) {
+        twitter_media_id = @"";
+        original_twitter_media_id = twitter_media_id;
+        favorited = @"";
+        retweeted = @"";
         
         CGRect screenRect = [[UIScreen mainScreen] bounds];
         CGFloat screenWidth = screenRect.size.width;
@@ -25,8 +29,18 @@
         profile_picture_image_view.layer.masksToBounds = YES;
         [self addSubview:profile_picture_image_view];
         
+        optionalImage = [[UIImageView alloc] init];
+        [optionalImage setBackgroundColor:[UIColor clearColor]];
+        [self addSubview:optionalImage];
+        
         tweet = [[UITextView alloc] initWithFrame:CGRectMake(65, 20, screenWidth-75, 200)];
-        tweet.userInteractionEnabled = NO;
+        tweet.userInteractionEnabled = YES;
+        tweet.scrollEnabled = NO;
+        tweet.editable = NO;
+        tweet.selectable = NO;
+        [tweet setDataDetectorTypes:UIDataDetectorTypeLink];
+        
+        [tweet setBackgroundColor:[UIColor clearColor]];
         tweet.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:14.5f];
         [self addSubview:tweet];
         
@@ -42,16 +56,16 @@
         
         interact_footer = [[UIView alloc] initWithFrame:CGRectMake(0, 100, screenWidth, 40)];
         
-        UIImageView *reply_image = [[UIImageView alloc] initWithFrame:CGRectMake(70, 6, 17,17)];
+        reply_image = [[UIImageView alloc] initWithFrame:CGRectMake(70, 6, 17,17)];
         reply_image.image = [UIImage imageNamed:@"reply.png"];
         [interact_footer addSubview:reply_image];
         
-        UIImageView *retweet_image = [[UIImageView alloc] initWithFrame:CGRectMake(reply_image.frame.origin.x+60, 6, 20,20)];
+        retweet_image = [[UIImageView alloc] initWithFrame:CGRectMake(reply_image.frame.origin.x+60, 6, 20,20)];
         retweet_image.image = [UIImage imageNamed:@"reweet.png"];
         //[interact_footer setBackgroundColor:[UIColor blackColor]];
         [interact_footer addSubview:retweet_image];
         
-        UIImageView *fav_image = [[UIImageView alloc] initWithFrame:CGRectMake(retweet_image.frame.origin.x+60, 0, 30,30)];
+        fav_image = [[UIImageView alloc] initWithFrame:CGRectMake(retweet_image.frame.origin.x+60, 0, 30,30)];
         fav_image.image = [UIImage imageNamed:@"fav.png"];
         [interact_footer addSubview:fav_image];
         [interact_footer setAlpha:0.6];
@@ -71,6 +85,7 @@
     }
     return self;
 }
+
 
 - (void)setSelected:(BOOL)selected animated:(BOOL)animated
 {

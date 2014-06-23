@@ -8,7 +8,7 @@
 #import "DataClass.h"
 
 @implementation DataClass
-@synthesize str, universal_instagram_feed, universal_twitter_feed, universal_feed, mainTableView, universal_feed_array, universal_facebook_feed;
+@synthesize str, universal_instagram_feed, universal_twitter_feed, universal_feed, mainTableView, universal_feed_array, universal_facebook_feed, universal_tumblr_feed, test_array, tumblrBlogs, mainNavController, mainViewController, urlWrapper, t, closeView, profileView;
 static DataClass *instance =nil;
 +(DataClass *)getInstance
 {

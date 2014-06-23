@@ -29,5 +29,5 @@
 @property (nonatomic, strong) UIView *like;
 @property (nonatomic, strong) UIView *foot_comment;
 
-
+@property (nonatomic, strong) NSString *media_id;
 @end

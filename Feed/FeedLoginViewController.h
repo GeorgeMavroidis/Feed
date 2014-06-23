@@ -9,6 +9,6 @@
 #import <UIKit/UIKit.h>
 #import "FacebookSDK.framework/Headers/FacebookSDK.h"
 
-@interface FeedLoginViewController : UIViewController <UITextFieldDelegate, FBLoginViewDelegate>
+@interface FeedLoginViewController : UIViewController <UITextFieldDelegate, FBLoginViewDelegate, UIActionSheetDelegate>
 
 @end

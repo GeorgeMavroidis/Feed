@@ -12,6 +12,8 @@
 #import "FeedConnectViewController.h"
 #import "Parse.framework/Headers/Parse.h"
 #import <GooglePlus/GooglePlus.h>
+#import <TMAPIClient.h>
+#import "FeedMainViewController.h"
 
 @implementation AppDelegate{
     UINavigationController *mainNavController;
@@ -21,7 +23,9 @@ static NSString * const kClientId = @"1067683679558-8870rh1fl1d8hi1sjd6neeecgjtq
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
-    
+    [FBLoginView class];
+    //FeedConnectViewController *feed = [[FeedConnectViewController alloc] init];
+    //[mainNavController pushViewController:feed animated:NO];
     [GPPSignIn sharedInstance].clientID = kClientId;
     self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     // Override point for customization after application launch.
@@ -38,25 +42,36 @@ static NSString * const kClientId = @"1067683679558-8870rh1fl1d8hi1sjd6neeecgjtq
     NSString *check_facebook = [NSString stringWithContentsOfFile:schedule_path
                                                    encoding:NSUTF8StringEncoding
                                                     error:NULL];
-    //check_facebook = @"no";
+    check_facebook = @"no";
+    check_facebook = @"yes";
     //NSLog(check_facebook);
     if([check_facebook isEqualToString:@"yes"]){
         // Whenever a person opens the app, check for a cached session
         if (FBSession.activeSession.state == FBSessionStateCreatedTokenLoaded) {
+            NSLog(@"here");
             
             // If there's one, just open the session silently, without showing the user the login UI
-            [FBSession openActiveSessionWithReadPermissions:@[@"basic_info"]
+            //Used to be basic_info
+            [FBSession openActiveSessionWithReadPermissions:@[@"public_profile, user_friends"]
                                                allowLoginUI:NO
                                           completionHandler:^(FBSession *session, FBSessionState state, NSError *error) {
                                               // Handler for session state changes
                                               // This method will be called EACH time the session state changes,
                                               // also for intermediate states and NOT just when the session open
                                               [self sessionStateChanged:session state:state error:error];
+                                              if(error) NSLog(@"%@", [error localizedDescription]);
+                                              NSLog(@"here");
                                               //NSLog(@"YES");
                                           }];
+        }else{
+            NSLog(@"not here");
         }
         
-        FeedConnectViewController *connect = [[FeedConnectViewController alloc]  init];
+//        FeedLoginViewController *mainViewController = [[FeedLoginViewController alloc] init];
+//        mainNavController = [[UINavigationController alloc] initWithRootViewController:mainViewController];
+//        [[self window] setRootViewController:mainNavController];
+        
+        FeedMainViewController *connect = [[FeedMainViewController alloc]  init];
         [connect.navigationController.navigationItem hidesBackButton];
         mainNavController = [[UINavigationController alloc] initWithRootViewController:connect];
     }else{
@@ -80,8 +95,6 @@ static NSString * const kClientId = @"1067683679558-8870rh1fl1d8hi1sjd6neeecgjtq
          annotation:(id)annotation {
     
     // You can add your app-specific url handling code here if needed
-    FeedConnectViewController *feed = [[FeedConnectViewController alloc] init];
-    [mainNavController pushViewController:feed animated:NO];
     NSString *documentsDirectory = [NSHomeDirectory()
                                     stringByAppendingPathComponent:@"Documents"];
     NSString *schedule_path = [documentsDirectory
@@ -89,6 +102,8 @@ static NSString * const kClientId = @"1067683679558-8870rh1fl1d8hi1sjd6neeecgjtq
     NSString *check_facebook = [NSString stringWithContentsOfFile:schedule_path
                                                          encoding:NSUTF8StringEncoding
                                                             error:NULL];
+    // return [[TMAPIClient sharedInstance] handleOpenURL:url];
+    
     check_facebook = @"no";
     if([check_facebook isEqualToString:@"yes"]){
         
@@ -119,6 +134,11 @@ static NSString * const kClientId = @"1067683679558-8870rh1fl1d8hi1sjd6neeecgjtq
          }];
         return [FBAppCall handleOpenURL:url sourceApplication:sourceApplication];
     }
+    
+    
+    
+    FeedConnectViewController *feed = [[FeedConnectViewController alloc] init];
+    [mainNavController pushViewController:feed animated:NO];
   
 }
 // This method will handle ALL the session state changes in the app
@@ -200,6 +220,7 @@ static NSString * const kClientId = @"1067683679558-8870rh1fl1d8hi1sjd6neeecgjtq
 - (void)applicationDidBecomeActive:(UIApplication *)application
 {
     // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+    [FBAppCall handleDidBecomeActive];
 }
 
 - (void)applicationWillTerminate:(UIApplication *)application

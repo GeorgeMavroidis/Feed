@@ -19,5 +19,13 @@
 
 
 @property (nonatomic, strong) UIImageView *profile_picture_image_view;
+@property (nonatomic, strong) UIImageView *optionalImage;
+@property (nonatomic, strong) UIImageView *fav_image;
+@property (nonatomic, strong) UIImageView *retweet_image;
+@property (nonatomic, strong) UIImageView *reply_image;
+@property (nonatomic, strong) NSString *twitter_media_id;
+@property (nonatomic, strong) NSString *original_twitter_media_id;
+@property (nonatomic, strong) NSString *favorited;
+@property (nonatomic, strong) NSString *retweeted;
 
 @end

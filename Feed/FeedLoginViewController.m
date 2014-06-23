@@ -10,6 +10,8 @@
 #import "FacebookSDK.framework/Headers/FacebookSDK.h"
 #import "FeedConnectViewController.h"
 #import <Parse/Parse.h>
+#import "AppDelegate.h"
+#import "STTwitter/STTwitterAPI.h"
 
 @interface FeedLoginViewController (){
     UIImageView *back, *close_button;
@@ -22,7 +24,10 @@
 
 @end
 
-@implementation FeedLoginViewController
+@implementation FeedLoginViewController{
+    
+    UILabel *connectFacebook;
+}
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
@@ -35,19 +40,19 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-   
-        [self createBackgroundImage];
-        [self.view setBackgroundColor:[UIColor blackColor]];
-        [self.navigationController setNavigationBarHidden:YES];
     
-        UILongPressGestureRecognizer *singleFingerTap =
-        [[UILongPressGestureRecognizer alloc] initWithTarget:self
-                                            action:@selector(handleSingleTap:)];
-        [back addGestureRecognizer:singleFingerTap];
-        back.userInteractionEnabled = YES;
-        [[UIApplication sharedApplication] setStatusBarHidden:YES];
+    [self createBackgroundImage];
+    [self.view setBackgroundColor:[UIColor blackColor]];
+    [self.navigationController setNavigationBarHidden:YES];
     
-        close_button.userInteractionEnabled = YES;
+    UILongPressGestureRecognizer *singleFingerTap =
+    [[UILongPressGestureRecognizer alloc] initWithTarget:self
+                                                  action:@selector(handleSingleTap:)];
+    [back addGestureRecognizer:singleFingerTap];
+    back.userInteractionEnabled = YES;
+    [[UIApplication sharedApplication] setStatusBarHidden:YES];
+    
+    close_button.userInteractionEnabled = YES;
     
 }
 - (void)handleSingleTap:(UILongPressGestureRecognizer *)recognizer {
@@ -89,10 +94,12 @@
     CGFloat screenWidth = screenRect.size.width;
     CGFloat screenHeight = screenRect.size.height;
     
-    back = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"nyc.jpg"]];
-    float skew = 1.4;
-    back.frame = CGRectMake(-400*skew, 0*skew, 800*skew, 500*skew);
-    
+//    back = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"nyc.jpg"]];
+//    
+//    float skew = 1.4;
+//    back.frame = CGRectMake(-400*skew, 0*skew, 800*skew, 500*skew);
+    UIView *back = [[UIView alloc] initWithFrame:CGRectMake(0, 0, screenWidth, screenHeight)];
+    [back setBackgroundColor:[UIColor whiteColor]];
     label = [[UILabel alloc] initWithFrame:CGRectMake(0, 65, screenWidth, 65)];
     [label setFont:[UIFont fontWithName:@"HelveticaNeue-UltraLight" size:85.0f]];
     label.textAlignment = NSTextAlignmentCenter;
@@ -101,7 +108,7 @@
     
     [self.view addSubview:label];
     
-    [self animateBack];
+//    [self animateBack];
     
     UIButton *getStarted = [UIButton buttonWithType:UIButtonTypeRoundedRect];
     [getStarted setBackgroundColor:[UIColor colorWithRed: 99.0/255.0 green: 184.0/255.0 blue:255.0/255.0 alpha: 1.0]];
@@ -113,7 +120,7 @@
     [getStarted setFont:[UIFont fontWithName:@"HelveticaNeue" size:20.0f]];
     [getStarted setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
     getStarted.frame = CGRectMake(10, screenHeight-125, screenWidth-20, 40.0);
-    [self.view addSubview:getStarted];
+//    [self.view addSubview:getStarted];
     
     UIButton *signIn = [UIButton buttonWithType:UIButtonTypeRoundedRect];
     [signIn setBackgroundColor:[UIColor colorWithRed: 230.0/255.0 green: 230.0/255.0 blue:230.0/255.0 alpha: 1.0]];
@@ -125,20 +132,20 @@
     [signIn setFont:[UIFont fontWithName:@"HelveticaNeue" size:20.0f]];
     [signIn setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
     signIn.frame = CGRectMake(10, screenHeight-70, screenWidth-20, 40.0);
-    [self.view addSubview:signIn];
+//    [self.view addSubview:signIn];
     
     getStartedView = [[UIScrollView alloc] init];
     [getStartedView setBackgroundColor:[UIColor whiteColor]];
     [getStartedView setFrame:CGRectMake(screenWidth, 0, screenWidth, screenHeight)];
     [getStartedView setBackgroundColor:[UIColor colorWithRed: 235.0/255.0 green: 235.0/255.0 blue:235.0/255.0 alpha: 1.0]];
     getStartedView.contentSize =CGSizeMake(screenWidth, screenHeight+40);
-    [self.view addSubview:getStartedView];
+//    [self.view addSubview:getStartedView];
     
     gtNav = [[UIView alloc] init];
     [gtNav setFrame:CGRectMake(screenWidth, 0, screenWidth, 50)];
     gtNav.userInteractionEnabled = YES;
     [gtNav setBackgroundColor:[UIColor colorWithRed: 255.0/255.0 green: 255.0/255.0 blue:255.0/255.0 alpha: 1.0]];
-    [self.view addSubview:gtNav];
+//    [self.view addSubview:gtNav];
     
     
     close_button = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"close_button.png"]];
@@ -189,13 +196,6 @@
     facebook.frame = CGRectMake(10, 120, screenWidth-20, 40.0);
     [getStartedView addSubview:facebook];
     
-    loginView = [[FBLoginView alloc] initWithReadPermissions:@[@"basic_info", @"email", @"read_stream"]];
-    loginView.frame = facebook.frame;
-    loginView.delegate = self;
-    [getStartedView addSubview:loginView];
-    //fbloginView = [[FBLoginView alloc] init];
-    //fbloginView.frame = facebook.frame;
-    //[getStartedView addSubview:fbloginView];
     
     UIImageView *or = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"or.png"]];
     or.frame = CGRectMake(0, 160, screenWidth, 50);
@@ -241,7 +241,128 @@
     UIView *lineView = [[UIView alloc] initWithFrame:CGRectMake(60, 40, screenWidth-60, 1)];
     lineView.backgroundColor = [UIColor colorWithRed: 230.0/255.0 green: 230.0/255.0 blue:230.0/255.0 alpha: 1.0];
     [login_view addSubview:lineView];
+    
+    connectFacebook = [[UILabel alloc] initWithFrame:CGRectMake(40, 430, screenWidth-80, 50)];
+    connectFacebook.text = @"Connect with Facebook";
+    connectFacebook.font = [UIFont fontWithName:@"HelveticaNeue-Thin" size:20.0f];
+    [connectFacebook setTextAlignment:NSTextAlignmentCenter];
+    [connectFacebook setTextColor:[UIColor colorWithRed:59/255.0f green:89/255.0f blue:152/215.0f alpha:1]];
+    [self.view addSubview:connectFacebook];
+    loginView = [[FBLoginView alloc] initWithReadPermissions:@[@"public_profile", @"email", @"read_stream"]];
+    loginView.frame = connectFacebook.frame;
+    loginView.delegate = self;
+    [self.view addSubview:loginView];
+    //fbloginView = [[FBLoginView alloc] init];
+    //fbloginView.frame = facebook.frame;
+    //[getStartedView addSubview:fbloginView];
 
+//    UITapGestureRecognizer *facebookTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(facebookButtonTouched:)];
+//    connectFacebook.userInteractionEnabled = YES;
+//    [connectFacebook addGestureRecognizer:facebookTap];
+    
+    UILabel *connectTwitter = [[UILabel alloc] initWithFrame:CGRectMake(40, 390, screenWidth-80, 50)];
+    connectTwitter.text = @"Connect with Twitter";
+    connectTwitter.font = [UIFont fontWithName:@"HelveticaNeue-Thin" size:20.0f];
+    [connectTwitter setTextAlignment:NSTextAlignmentCenter];
+    [connectTwitter setTextColor:[UIColor colorWithRed:85/255.0f green:172/255.0f blue:238/215.0f alpha:1]];
+    [self.view addSubview:connectTwitter];
+    
+    UITapGestureRecognizer *twitter_recognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(twitterTap:)];
+    [connectTwitter setUserInteractionEnabled:YES];
+    [connectTwitter addGestureRecognizer:twitter_recognizer];
+    
+//    FBLoginView *loginView = [[FBLoginView alloc] init];
+//    loginView.alpha = 0;
+    // Align the button in the center horizontally
+//    loginView.frame = CGRectOffset(loginView.frame, (self.view.center.x - (loginView.frame.size.width / 2)), connectFacebook.frame.origin.y);
+//    loginView.readPermissions = @[@"public_profile", @"email", @"user_friends"];
+    //    loginView.delegate = self;
+    
+    //    [self.view addSubview:loginView];
+    // Do any additional setup after loading the view.
+    
+    
+
+
+}
+- (IBAction)facebookButtonTouched:(id)sender
+{
+    // If the session state is any of the two "open" states when the button is clicked
+    if (FBSession.activeSession.state == FBSessionStateOpen
+        || FBSession.activeSession.state == FBSessionStateOpenTokenExtended) {
+        
+        // Close the session and remove the access token from the cache
+        // The session state handler (in the app delegate) will be called automatically
+        
+        NSLog(@"here");
+        [FBRequestConnection startForMeWithCompletionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
+            if (!error) {
+                [FBSession.activeSession closeAndClearTokenInformation];
+                
+                
+            } else {
+                // An error occurred, we need to handle the error
+                // See: https://developers.facebook.com/docs/ios/errors
+            }
+        }];
+        
+        
+        // If the session state is not any of the two "open" states when the button is clicked
+    } else {
+        // Open a session showing the user the login UI
+        // You must ALWAYS ask for public_profile permissions when opening a session
+        [FBSession openActiveSessionWithReadPermissions:@[@"public_profile", @"email", @"user_friends"]
+                                           allowLoginUI:YES
+                                      completionHandler:
+         ^(FBSession *session, FBSessionState state, NSError *error) {
+             
+             // Retrieve the app delegate
+             AppDelegate* appDelegate = [UIApplication sharedApplication].delegate;
+             // Call the app delegate's sessionStateChanged:state:error method to handle session state changes
+             [appDelegate sessionStateChanged:session state:state error:error];
+         }];
+    }
+}
+
+-(void)facebookTap{
+    
+}
+- (void)didReceiveMemoryWarning
+{
+    [super didReceiveMemoryWarning];
+    // Dispose of any resources that can be recreated.
+}
+- (void)twitterTap:(UITapGestureRecognizer *)recognizer {
+    ACAccountStore *accountStore = [[ACAccountStore alloc] init];
+    
+    // Create an account type that ensures Twitter accounts are retrieved.
+    ACAccountType *accountType = [accountStore accountTypeWithAccountTypeIdentifier:ACAccountTypeIdentifierTwitter];
+    
+    
+    // Request access from the user to use their Twitter accounts.
+    [accountStore requestAccessToAccountsWithType:accountType withCompletionHandler:^(BOOL granted, NSError *error) {
+        // Get the list of Twitter accounts.
+        if(granted) {
+            NSArray *accountsArray = [accountStore accountsWithAccountType:accountType];
+            //NSLog(@"%@", accountsArray);
+            [self performSelectorOnMainThread:@selector(populateSheetAndShow:) withObject:accountsArray waitUntilDone:NO];
+        }else{
+            
+        }
+    }];
+}
+-(void)populateSheetAndShow:(NSArray *) accountsArray {
+    NSMutableArray *buttonsArray = [NSMutableArray array];
+    [accountsArray enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+        [buttonsArray addObject:((ACAccount*)obj).username];
+    }];
+    //NSLog(@"%@", buttonsArray);
+    
+    UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle:nil delegate:self cancelButtonTitle:nil destructiveButtonTitle:@"Cancel" otherButtonTitles:nil];
+    actionSheet.delegate = self;
+    for( NSString *title in buttonsArray)
+        [actionSheet addButtonWithTitle:title];
+    [actionSheet showInView:self.view];
 }
 -(void)facebook{
     NSLog(@"test");
@@ -250,6 +371,7 @@
 }
 - (void)loginViewFetchedUserInfo:(FBLoginView *)loginView
                             user:(id<FBGraphUser>)user {
+//    NSLog(@"%@", user);
     //NSLog(user.id);
     /*FBRequest* friendsRequest = [FBRequest requestForMyFriends];
     [friendsRequest startWithCompletionHandler: ^(FBRequestConnection *connection,
@@ -263,15 +385,37 @@
     }];
      */
     
+    CGRect screenRect = [[UIScreen mainScreen] bounds];
+    CGFloat screenWidth = screenRect.size.width;
+    CGFloat screenHeight = screenRect.size.height;
+   
     PFUser *puser = [PFUser user];
-    puser.username = user.username;
+    puser.username = [user objectForKey:@"email"];
     puser.password = @"";
     puser.email = [user objectForKey:@"email"];
     puser[@"facebook_id"] = user.id;
     puser[@"facebook_first_name"] = user.first_name;
     puser[@"facebook_last_name"] = user.last_name;
     puser[@"facebook_link"] = user.link;
+    puser[@"profile_image"] = [NSString stringWithFormat:@"http://graph.facebook.com/%@/picture?width=200&height=200", user.id];
+    NSString *link_cover =[NSString stringWithFormat:@"http://graph.facebook.com/%@?fields=cover", user.id];
+    NSURL *url = [[NSURL alloc] initWithString:link_cover];
+//    NSLog(@"%@", urlAsString);
     
+    NSData *data=[NSData dataWithContentsOfURL:url];
+    NSError *err=nil;
+    NSDictionary *response=[NSJSONSerialization JSONObjectWithData:data options:
+                 NSJSONReadingMutableContainers error:&err];
+
+    NSString *photo_id = [[response objectForKey:@"cover"] objectForKey:@"id"];
+    NSString *cover = [NSString stringWithFormat:@"http://graph.facebook.com/%@?fields=cover", user.id];
+    cover =[[response objectForKey:@"cover"] objectForKey:@"source"];
+    NSLog(@"%@", response);
+    //puser[@"cover_image"] =
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setValue:[NSString stringWithFormat:@"http://graph.facebook.com/%@/picture?width=200&height=200", user.id] forKey:@"profile_image"];
+    [defaults setValue:cover forKey:@"cover_image"];
+    [defaults synchronize];
     
     NSString *documentsDirectory = [NSHomeDirectory()
                                     stringByAppendingPathComponent:@"Documents"];
@@ -403,11 +547,7 @@
                      completion:^(BOOL finished){
                      }];
 }
-- (void)didReceiveMemoryWarning
-{
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
-}
+
 -(BOOL)textFieldShouldReturn:(UITextField*)textField {
     if (textField == username) {
 		[username resignFirstResponder];
@@ -424,4 +564,60 @@
     }
 	return YES;
 }
+-(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex{
+    
+    //  [actionSheet dismissWithClickedButtonIndex:<#(NSInteger)#> animated:<#(BOOL)#>]
+    ACAccountStore *accountStore = [[ACAccountStore alloc] init];
+    
+    // Create an account type that ensures Twitter accounts are retrieved.
+    ACAccountType *accountType = [accountStore accountTypeWithAccountTypeIdentifier:ACAccountTypeIdentifierTwitter];
+    NSArray *accountsArray = [accountStore accountsWithAccountType:accountType];
+    
+    ACAccount *acct = [accountsArray objectAtIndex:(int)buttonIndex - 1];
+    //self.STTwitter = [STTwitterAPI twitterAPIAppOnlyWithConsumerKey:@"4tIoaRQHod1IQ00wtSmRw" consumerSecret:@"S6GATtE4xirn5WlfW79d6aSH4ciMD196hPQuL2g52M8"];
+    //self.STTwitter = [STTwitterAPI twitterAPIOSWithAccount:acct];
+    
+    STTwitterAPI *twitter = [STTwitterAPI twitterAPIWithOAuthConsumerName:nil consumerKey:@"4tIoaRQHod1IQ00wtSmRw" consumerSecret:@"S6GATtE4xirn5WlfW79d6aSH4ciMD196hPQuL2g52M8"];
+    
+    [twitter postReverseOAuthTokenRequest:^(NSString *authenticationHeader) {
+        
+        STTwitterAPI *twitterAPIOS = [STTwitterAPI twitterAPIOSWithAccount:acct];
+        
+        [twitterAPIOS verifyCredentialsWithSuccessBlock:^(NSString *username) {
+            
+            [twitterAPIOS postReverseAuthAccessTokenWithAuthenticationHeader:authenticationHeader
+                                                                successBlock:^(NSString *oAuthToken,
+                                                                               NSString *oAuthTokenSecret,
+                                                                               NSString *userID,
+                                                                               NSString *screenName) {
+                                                                    NSLog(screenName);
+                                                                    NSMutableArray *twitter_auth_array = [[NSMutableArray alloc] initWithObjects:oAuthToken, oAuthTokenSecret, @"4tIoaRQHod1IQ00wtSmRw", @"S6GATtE4xirn5WlfW79d6aSH4ciMD196hPQuL2g52M8", nil];
+                                                                    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+                                                                    [defaults setObject:twitter_auth_array forKey:@"twitter_auth_array"];
+                                                                    NSString *documentsDirectory = [NSHomeDirectory()
+                                                                                                    stringByAppendingPathComponent:@"Documents"];
+                                                                    
+                                                                    NSString *storePath = [documentsDirectory stringByAppendingPathComponent:@"twitter_auth.txt"];
+                                                                    [@"yes" writeToFile:storePath atomically:YES];
+                                                                    storePath = [documentsDirectory stringByAppendingPathComponent:@"twitter_auth"];
+                                                                    [twitter_auth_array writeToFile:storePath atomically:YES];
+                                                                    // use the tokens...
+                                                                } errorBlock:^(NSError *error) {
+                                                                    NSLog(@"error: %@", [error localizedDescription]);
+                                                                    // ...
+                                                                }];
+            
+        } errorBlock:^(NSError *error) {
+            // ...
+        }];
+        
+    } errorBlock:^(NSError *error) {
+        // ...
+    }];
+    
+    
+    //[self fetchTimelineForUser:[actionSheet buttonTitleAtIndex:buttonIndex]];
+    
+}
+
 @end

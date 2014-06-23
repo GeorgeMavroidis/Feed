@@ -22,7 +22,7 @@
 #import "STTwitter.h"
 #import "DataClass.h"
 #import "AppDelegate.h"
-
+#import <TMAPIClient.h>
 
 
 @interface FeedConnectViewController (){
@@ -94,7 +94,10 @@
     [self drawConnections];
     [signIn trySilentAuthentication];
     
-    //[self nextScreen];
+    [TMAPIClient sharedInstance].OAuthConsumerKey = @"gPPreRGZ96PskkcUk9J0fg70gCjWtI8AfO3aq20Ssenqzj5KIs";
+    [TMAPIClient sharedInstance].OAuthConsumerSecret = @"zDyi5guipOImlfJEAd7Q4aTodo1z7Y3p66cXOvrA4xa6b9gSiI";
+    
+//    [self nextScreen];
 }
 -(void)setUserDefaults{
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
@@ -289,7 +292,8 @@
     NSString *check_facebook = [NSString stringWithContentsOfFile:schedule_path
                                                          encoding:NSUTF8StringEncoding
                                                             error:NULL];
-    //check_facebook = @"no";
+    check_facebook = @"no";
+    check_facebook = @"yes";
     if([check_facebook isEqualToString:@"yes"]){
         
         
@@ -305,7 +309,8 @@
         } else {
             // Open a session showing the user the login UI
             // You must ALWAYS ask for basic_info permissions when opening a session
-            [FBSession openActiveSessionWithReadPermissions:@[@"basic_info"]
+            //USed to be basic_info
+            [FBSession openActiveSessionWithReadPermissions:@[@"public_profile, user_friends"]
                                                allowLoginUI:YES
                                           completionHandler:
              ^(FBSession *session, FBSessionState state, NSError *error) {
@@ -482,8 +487,8 @@
 }- (void)plusTap:(UITapGestureRecognizer *)recognizer {
     // Make sure the GPPSignInButton class is linked in because references from
     // xib file doesn't count.
-    
     [signIn authenticate];
+    
     
 }
 - (void)instagramTap:(UITapGestureRecognizer *)recognizer {
@@ -541,6 +546,7 @@
     
 }
 - (void)tumblrTap:(UITapGestureRecognizer *)recognizer {
+    // Make the request
     
 }
 - (void)pinterestTap:(UITapGestureRecognizer *)recognizer {
@@ -559,6 +565,8 @@
     if (error) {
         NSLog(@"Received error %@ and auth object %@",error, auth);
     } else {
+        
+        NSLog(@"%@", signIn.authentication.userEmail);
         
         //[self refreshInterfaceBasedOnSignIn];
     }
