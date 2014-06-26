@@ -19,6 +19,7 @@
     UILabel *profile;
     UIView *urlWrapper, *closeView,*profile_view;
     UIWebView *t;
+    
     ProfileDataClass *singleton_universal;
     NSMutableArray *local_universal_feed_array;
 }
