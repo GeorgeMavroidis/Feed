@@ -392,11 +392,23 @@
     [cell.image_caption setEditable:NO];
     [cell.image_caption addGestureRecognizer:gr];
     
+    
+    
     [cell.comments_text setUserInteractionEnabled:YES];
     [cell.comments_text setScrollEnabled:NO];
     [cell.comments_text setEditable:NO];
     [cell.comments_text addGestureRecognizer:gr];
-
+//    [cell.comments_text setBackgroundColor:[UIColor blackColor]];
+    
+    UITapGestureRecognizer *prof_pic_tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(profile_from_instagram_tap:)];
+    cell.profile_picture_image_view.userInteractionEnabled = YES;
+    
+    [cell.profile_picture_image_view addGestureRecognizer:prof_pic_tap];
+    
+    UITapGestureRecognizer *prof_user_tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(profile_from_user_instagram_tap:)];
+    cell.username.userInteractionEnabled = YES;
+//    [cell.username setScrollEnabled:NO];
+    [cell.username addGestureRecognizer:prof_user_tap];
     return cell;
 }
 +(void)instagramDoubleTap:(UITapGestureRecognizer *)sender {
@@ -1349,6 +1361,11 @@
         new_frame.size.width = width;
         temp_tag.frame = new_frame;
         [tag_scroll_view addSubview:temp_tag];
+        
+        UITapGestureRecognizer  *gr = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(textTappedTumblr:)];
+        [temp_tag setUserInteractionEnabled:YES];
+        [temp_tag addGestureRecognizer:gr];
+        
 //        temp_tag.contentMode = UIViewContentModeScaleAspectFit;
         last_width += width+10;
     }
@@ -1443,11 +1460,11 @@
 //    htmlString = [htmlString stringByReplacingOccurrencesOfString:@"string" withString:@"duck"];
     UIWebView *webView = [[UIWebView alloc] initWithFrame:CGRectMake(0, 0, screenWidth, 100)];
     webView.userInteractionEnabled = YES;
-    webView.scrollView.scrollEnabled = YES;
     webView.delegate = self;
 //    [webView loadHTMLString:htmlString baseURL:nil];
     //load file into webView
     [webView loadHTMLString:htmlString baseURL:nil];
+//    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"http://www.google.ca"]]];
     
     NSString *innerText = [self stringByStrippingHTML:htmlString];
     NSDictionary *attrsDictionary = [NSDictionary dictionaryWithObject:font
@@ -1457,26 +1474,40 @@
                                                                                        NSCharacterEncodingDocumentAttribute: @(NSUTF8StringEncoding)}
                                                                   documentAttributes:nil error:nil];
     
+//    UILabel *m = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, screenWidth, 1000)];
+//    m.attributedText = attributed_string;
+//    [cell.textView addSubview:m];
     //NSLog(@"%@", htmlString);
     
     int height = [self returnTumblrMessageHeight:indexPath textString:attributed_string];
+//    int height = webView.scrollView.contentSize.height;
     webView.frame = CGRectMake(0, 0, screenWidth, height);
-    
+    webView.delegate = self;
+    [webView.scrollView setBounces:NO];
 //    webView.clipsToBounds = YES;
     
     CGRect new_frame = cell.textView.frame;
     new_frame.origin.y = end_of_photo_content;
+    new_frame.origin.x = 0;
     new_frame.size.height = height;
+    new_frame.size.width = screenWidth;
     //new_frame.size.height = webView.scrollView.contentSize.height;
     cell.textView.frame = new_frame;
-    //webView.userInteractionEnabled = YES;
-    [cell.textView addSubview:webView];
     
+    [cell.textView setBackgroundColor:[UIColor blackColor]];
+    [cell.textView setUserInteractionEnabled:YES];
+    
+    UIView *a = [[UIView alloc] initWithFrame:CGRectMake(0, 0, screenWidth, height)];
+//    [a setBackgroundColor:[UIColor blackColor]];
+    [cell.textView addSubview:a];
+    
+    
+    [a addSubview:webView];
 //    CGFloat hForT = [self tableView:tableView heightForTumblr:indexPath singleton:singleton_universal];
     
     new_frame = cell.interactView.frame;
 //    new_frame.origin.y = hForT-50;
-    new_frame.origin.y = cell.contentView.frame.origin.y +cell.contentView.frame.size.height;
+    new_frame.origin.y = cell.contentView.frame.origin.y +cell.contentView.frame.size.height+10;
     //NSLog(@"cell height %f", cell.frame.size.height);
     new_frame.size.height = 30;
     cell.interactView.frame = new_frame;
@@ -1523,8 +1554,31 @@
     cell.share_view.userInteractionEnabled = YES;
     [cell.share_view addGestureRecognizer:tumblrShare];
 
+    UITapGestureRecognizer *prof_pic_tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(profile_from_tumblr_tap:)];
+    cell.profile_image_view.userInteractionEnabled = YES;
+    
+    [cell.profile_image_view addGestureRecognizer:prof_pic_tap];
+    
+    UITapGestureRecognizer *prof_user_tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(profile_from_user_tumblr_tap:)];
+    cell.username.userInteractionEnabled = YES;
+    //    [cell.username setScrollEnabled:NO];
+    [cell.username addGestureRecognizer:prof_user_tap];
     
     return cell;
+}
++ (BOOL)webView:(UIWebView *)webView shouldStartLoadWithRequest:(NSURLRequest *)request navigationType:(UIWebViewNavigationType)navigationType{
+ //   NSLog(@"here");
+//    [[UIApplication sharedApplication] openURL:[request URL]];
+    if (navigationType == UIWebViewNavigationTypeLinkClicked ) {
+        NSLog(@"%@", request.URL);
+        [[UIApplication sharedApplication] openURL:[request URL]];
+        
+       
+//        [[UIApplication sharedApplication] openURL:[request URL]];
+        return NO;
+    }
+    
+    return YES;
 }
 +(void)loadTumblrCompose:(UITapGestureRecognizer *)responder{
     
@@ -1925,7 +1979,7 @@
     int height = [self returnTumblrMessageHeight:indexPath textString:attributed_string];
 //    int height = 0;
     
-    return 60+ photo_content_height + 10*[photos count] + height+20 +45+10;
+    return 60+ photo_content_height + 10*[photos count] + height+20 +45+20;
     
 }
 +(CGFloat)tableView:(UITableView *)tableView heightForFacebook:(NSIndexPath *)indexPath singleton:(NSMutableArray *)singleton_universal{
@@ -2118,6 +2172,26 @@
     [singleton_universal.mainNavController pushViewController:profile animated:YES];
     
 }
++(void)profile_from_instagram_tap:(UITapGestureRecognizer *)recognizer{
+    
+    InstagramCell *test =[[[((InstagramCell *) recognizer.view) superview] superview] superview];
+    NSString *name = test.username.text;
+    DataClass *singleton_universal = [DataClass getInstance];
+    
+    ProfileView *profile = [[ProfileView alloc] initWithProfile:name type:@"instagram"];
+    [singleton_universal.mainNavController pushViewController:profile animated:YES];
+    
+}
++(void)profile_from_tumblr_tap:(UITapGestureRecognizer *)recognizer{
+    
+    TumblrCell *test =[[((TumblrCell *) recognizer.view) superview] superview];
+    NSString *name = test.username.text;
+    DataClass *singleton_universal = [DataClass getInstance];
+    
+    ProfileView *profile = [[ProfileView alloc] initWithProfile:name type:@"tumblr"];
+    [singleton_universal.mainNavController pushViewController:profile animated:YES];
+    
+}
 +(void)loadTwitterCompose:(UITapGestureRecognizer *)responder{
     TwitterCell *test =[[[((TwitterCell *) responder.view) superview] superview] superview];
     
@@ -2161,6 +2235,27 @@
     NSRange range = [name rangeOfString:@" " options:NSBackwardsSearch];
     NSString *result = [name substringFromIndex:range.location+1];
     ProfileView *profile = [[ProfileView alloc] initWithProfile:result type:@"twitter"];
+    [singleton_universal.mainNavController pushViewController:profile animated:YES];
+    
+}
+
++(void)profile_from_user_instagram_tap:(UITapGestureRecognizer *)recognizer{
+    
+    InstagramCell *test =[[[((InstagramCell *) recognizer.view) superview] superview] superview];
+    NSString *name = test.username.text;
+    DataClass *singleton_universal = [DataClass getInstance];
+   
+    ProfileView *profile = [[ProfileView alloc] initWithProfile:name type:@"instagram"];
+    [singleton_universal.mainNavController pushViewController:profile animated:YES];
+    
+}
++(void)profile_from_user_tumblr_tap:(UITapGestureRecognizer *)recognizer{
+    
+    TumblrCell *test =[[((TumblrCell *) recognizer.view) superview] superview];
+    NSString *name = test.username.text;
+    DataClass *singleton_universal = [DataClass getInstance];
+    
+    ProfileView *profile = [[ProfileView alloc] initWithProfile:name type:@"tumblr"];
     [singleton_universal.mainNavController pushViewController:profile animated:YES];
     
 }
@@ -2271,6 +2366,80 @@
         }
         //
     }
+}
++ (void)textTappedTumblr:(UITapGestureRecognizer *)recognizer
+{
+    
+    //    TwitterCell *test =[((TwitterCell *) recognizer.view) superview];
+    
+    DataClass *singleton_universal = [DataClass getInstance];
+    UILabel *label = (UILabel *)recognizer.view;
+    
+    // Location of the tap in text-container coordinates
+    NSString *firstWord = [[label.text componentsSeparatedByString:@" "] objectAtIndex:0];
+        NSString *needle = firstWord;
+        
+        CGRect screenRect = [[UIScreen mainScreen] bounds];
+        CGFloat screenWidth = screenRect.size.width;
+        CGFloat screenHeight = screenRect.size.height;
+        
+        
+        if ( [needle rangeOfString:@"http://" options:NSCaseInsensitiveSearch].location != NSNotFound ) {
+            singleton_universal.urlWrapper = [[UIView alloc] initWithFrame:CGRectMake(0, screenHeight , screenWidth, screenHeight)];
+            [singleton_universal.mainViewController.view addSubview:singleton_universal.urlWrapper];
+            
+            singleton_universal.closeView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, screenWidth, 40)];
+            [singleton_universal.closeView setBackgroundColor:[UIColor whiteColor]];
+            
+            UITapGestureRecognizer *tgr = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(closeURLView:)];
+            [singleton_universal.closeView addGestureRecognizer:tgr];
+            
+            UILabel *closeLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, screenWidth-10, 40)];
+            closeLabel.text = @"X";
+            closeLabel.textAlignment = NSTextAlignmentRight;
+            closeLabel.font = [UIFont fontWithName:@"HelveticaNeue-UltraLight" size:40];
+            [singleton_universal.closeView addSubview:closeLabel];
+            
+            singleton_universal.t = [[UIWebView alloc] initWithFrame:CGRectMake(0, 40, screenWidth, screenHeight-0)];
+            singleton_universal.t.delegate = singleton_universal.mainViewController;
+            singleton_universal.t.scalesPageToFit=YES;
+            singleton_universal.t.scrollView.delegate = singleton_universal.mainViewController;
+            NSURL *url = [NSURL URLWithString:needle];
+            NSURLRequest* request = [NSURLRequest requestWithURL:url];
+            [singleton_universal.t loadRequest:request];
+            [singleton_universal.urlWrapper addSubview:singleton_universal.t];
+            [singleton_universal.urlWrapper addSubview:singleton_universal.closeView];
+            
+            [UIView animateWithDuration:0.5
+                                  delay:0.0
+                                options: UIViewAnimationCurveEaseOut
+                             animations:^{
+                                 CGRect new_frame = singleton_universal.urlWrapper.frame;
+                                 new_frame.origin.y = 0;
+                                 singleton_universal.urlWrapper.frame = new_frame;
+                                 
+                                 [singleton_universal.mainNavController setNavigationBarHidden:YES];
+                             }
+                             completion:^(BOOL finished){
+                                 //                             NSLog(@"Done!");
+                             }];
+            
+            
+        }else{
+            //            NSLog(@"not");
+        }
+        if ( [needle rangeOfString:@"#" options:NSCaseInsensitiveSearch].location != NSNotFound ) {
+            
+            HashtagSearch *hashtag = [[HashtagSearch alloc] initWithSearch:needle];
+            [singleton_universal.mainNavController pushViewController:hashtag animated:YES];
+        }
+        if ( [needle rangeOfString:@"@" options:NSCaseInsensitiveSearch].location != NSNotFound ) {
+            
+            ProfileView *profile = [[ProfileView alloc] initWithProfile:needle type:@"twitter"];
+            [singleton_universal.mainNavController pushViewController:profile animated:YES];
+        }
+        //
+    
 }
 +(void)closeURLView:(UITapGestureRecognizer *)sender{
     CGRect screenRect = [[UIScreen mainScreen] bounds];

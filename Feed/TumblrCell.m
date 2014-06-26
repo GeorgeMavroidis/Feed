@@ -26,7 +26,7 @@
         [contentView setBackgroundColor:[UIColor clearColor]];
         profile_image_view = [[UIImageView alloc] initWithFrame:CGRectMake(10, 10, 40, 40)];
         username = [[UILabel alloc] initWithFrame:CGRectMake(60, 20, screenWidth, 20)];
-        textView = [[UIView alloc] init];
+        textView = [[UIView alloc] initWithFrame:CGRectMake(10, 10, screenWidth, 50)];
         [textView setBackgroundColor:[UIColor clearColor]];
         interactView = [[UIView alloc] initWithFrame:CGRectMake(0, 100, screenWidth, 30)];
         //[interactView setBackgroundColor:[UIColor clearColor]];

@@ -737,9 +737,17 @@
             [tableView setNeedsDisplay];
         }*/
     //}
+    
     CGPoint scrollVelocity = [scrollView.panGestureRecognizer velocityInView:scrollView.superview];
     if (scrollVelocity.y > 0.0f){
-        [UIView animateWithDuration:0.5
+        
+        CGRect new_frame = headerViewNew.frame;
+        if(new_frame.origin.y < 0){
+            new_frame.origin.y += 1;
+            headerViewNew.frame = new_frame;
+        }
+        
+        /*[UIView animateWithDuration:0.5
                               delay:0.0
                             options: UIViewAnimationCurveEaseOut
                          animations:^{
@@ -749,10 +757,16 @@
                          }
                          completion:^(BOOL finished){
                          }];
+        */
        
     }
     else if (scrollVelocity.y < 0.0f){
-        [UIView animateWithDuration:0.5
+        CGRect new_frame = headerViewNew.frame;
+        if(new_frame.origin.y > -headerViewNew.frame.size.height){
+            new_frame.origin.y -= 1;
+            headerViewNew.frame = new_frame;
+        }
+       /* [UIView animateWithDuration:0.5
                               delay:0.0
                             options: UIViewAnimationCurveEaseOut
                          animations:^{
@@ -764,7 +778,7 @@
                          }
                          completion:^(BOOL finished){
                          }];
-        
+        */
     }
 
         CGPoint scrollVelo = [t.scrollView.panGestureRecognizer velocityInView:t.scrollView.superview];
@@ -805,6 +819,41 @@
     
     
 
+}
+-(void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate{
+    CGPoint scrollVelocity = [scrollView.panGestureRecognizer velocityInView:scrollView.superview];
+    if (scrollVelocity.y > 0.0f){
+        
+        
+        [UIView animateWithDuration:0.5
+         delay:0.0
+         options: UIViewAnimationCurveEaseOut
+         animations:^{
+         CGRect new_frame = headerViewNew.frame;
+         new_frame.origin.y = 0;
+         headerViewNew.frame = new_frame;
+         }
+         completion:^(BOOL finished){
+         }];
+         
+        
+    }
+    else if (scrollVelocity.y < 0.0f){
+        
+         [UIView animateWithDuration:0.5
+         delay:0.0
+         options: UIViewAnimationCurveEaseOut
+         animations:^{
+         CGRect new_frame = headerViewNew.frame;
+         new_frame.origin.y = -headerViewNew.frame.size.height;
+         headerViewNew.frame = new_frame;
+         
+         [searchBar resignFirstResponder];
+         }
+         completion:^(BOOL finished){
+         }];
+        
+    }
 }
 
 @end

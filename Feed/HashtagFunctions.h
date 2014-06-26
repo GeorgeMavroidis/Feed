@@ -13,11 +13,11 @@
 
 +(void)fetchTwitterFeed:(NSString *)hashtag singleton:(HashtagDataClass *)singleton_universal;
 +(void)fetchInstagramFeed:(NSString *)hashtag singleton:(HashtagDataClass *)singleton_universal;
++(void)fetchTumblrFeed:(NSString *)hashtag singleton:(HashtagDataClass *)singleton_universal;
 +(void)addTwitterToFeed:(HashtagDataClass *)singleton_universal;
 +(void)addInstagramFeed:(HashtagDataClass *)singleton_universal;
++(void)addTumblrFeed:(HashtagDataClass *)singleton_universal;
 
-+(TwitterCell *)createTwitterCell:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath singleton:(NSMutableArray *)singleton_universal;
 +(void)sortUniversalFeedByTime:(HashtagDataClass *)singleton_universal;
 
-+(CGFloat)tableView:(UITableView *)tableView heightForTwitter:(NSIndexPath *)indexPath singleton:(HashtagDataClass *)singleton_universal;
 @end
