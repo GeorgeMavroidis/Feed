@@ -46,7 +46,7 @@
         image_caption = [[UITextView alloc] initWithFrame:CGRectMake(20, 390, screenWidth-40, 1000)];
         
         image_caption.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:14.5f];
-        image_caption.userInteractionEnabled = NO;
+//        image_caption.userInteractionEnabled = NO;
         [image_caption setBackgroundColor:[UIColor clearColor]];
         [self addSubview:image_caption];
         [self addSubview:photo_likes];

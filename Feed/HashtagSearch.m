@@ -121,7 +121,11 @@
     
     [HashtagFunctions fetchInstagramFeed:searched singleton:singleton_universal];
     
+    [HashtagFunctions fetchTumblrFeed:searched singleton:singleton_universal];
+    
     [HashtagFunctions addInstagramFeed:singleton_universal];
+//    [HashtagFunctions addTumblrFeed:singleton_universal];
+    
     local_universal_feed_array = singleton_universal.universal_feed_array;
     [main_tableView reloadData];
 }
@@ -182,6 +186,7 @@
 {
     //    NSString *type = [[singleton_universal.universal_feed_array objectAtIndex:indexPath.row] objectForKey:@"type"];
     NSString *type = [[local_universal_feed_array objectAtIndex:indexPath.row] objectForKeyedSubscript:@"type"];
+    
     if([type isEqualToString:@"instagram"]){
         static NSString *cellIdentifier = @"InstagramCell";
         [tableView registerClass:[InstagramCell class] forCellReuseIdentifier:cellIdentifier];

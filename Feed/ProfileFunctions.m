@@ -1,12 +1,12 @@
 //
-//  HashtagFunctions.m
+//  ProfileFunctions.m
 //  Feed
 //
 //  Created by George on 2014-06-18.
 //  Copyright (c) 2014 George. All rights reserved.
 //
 
-#import "HashtagFunctions.h"
+#import "ProfileFunctions.h"
 #import "STTwitter.h"
 #import "CreationFunctions.h"
 #import "TwitterCell.h"
@@ -14,9 +14,9 @@
 
 #import <TMAPIClient.h>
 
-@implementation HashtagFunctions
+@implementation ProfileFunctions
 
-+(void)fetchTwitterFeed:(NSString *)hashtag singleton:(HashtagDataClass *)singleton_universal{
++(void)fetchTwitterFeed:(NSString *)hashtag singleton:(ProfileDataClass *)singleton_universal{
     // NSMutableArray *twitter_auth = [[NSUserDefaults standardUserDefaults] objectForKey:@"twitter_auth_array"];
     
     NSString *documentsDirectory = [NSHomeDirectory()
@@ -35,7 +35,7 @@
     [twitter verifyCredentialsWithSuccessBlock:^(NSString *bearerToken) {
         
         [twitter getSearchTweetsWithQuery:hashtag successBlock:^(NSDictionary *searchMetadata, NSArray *statuses) {
-//            NSLog(@"%@", statuses);
+            //            NSLog(@"%@", statuses);
             
             [singleton_universal.universal_twitter_feed setObject:statuses forKey:@"twitter_data"];
             [singleton_universal.universal_twitter_feed setObject:@"twitter" forKey:@"type"];
@@ -50,7 +50,7 @@
     }];
     
 }
-+(void)addTumblrToFeed:(HashtagDataClass *)singleton_universal{
++(void)addTumblrToFeed:(ProfileDataClass *)singleton_universal{
     
     NSMutableDictionary *test = [singleton_universal.universal_tumblr_feed objectForKey:@"tumblr_data"];
     
@@ -65,7 +65,7 @@
     //NSLog(@"%d", [[singleton_universal.universal_feed objectForKey:@"facebook_entry"] count]);
     [singleton_universal.mainTableView reloadData];
 }
-+(void)fetchTumblrFeed:(NSString *)hashtag singleton:(HashtagDataClass *)singleton_universal{
++(void)fetchTumblrFeed:(NSString *)hashtag singleton:(ProfileDataClass *)singleton_universal{
     [TMAPIClient sharedInstance].OAuthConsumerKey = @"gPPreRGZ96PskkcUk9J0fg70gCjWtI8AfO3aq20Ssenqzj5KIs";
     [TMAPIClient sharedInstance].OAuthConsumerSecret = @"zDyi5guipOImlfJEAd7Q4aTodo1z7Y3p66cXOvrA4xa6b9gSiI";
     [TMAPIClient sharedInstance].OAuthToken = @"5HPnr9RGkFPNsGThFYoBehtBakYg46skHWNeLD9J5tmDHGHPyF";
@@ -76,7 +76,7 @@
                                     };
     [[TMAPIClient sharedInstance] tagged:hashtag parameters:dashboardDict callback:^(id result, NSError *error) {
         if (!error) {
-//            NSDictionary *jsonData = [NSJSONSerialization JSONObjectWithData:result options:kNilOptions error:&error];
+            //            NSDictionary *jsonData = [NSJSONSerialization JSONObjectWithData:result options:kNilOptions error:&error];
             
             
             NSArray *tumblr_data = result; //2
@@ -88,7 +88,7 @@
             }
             tumblr_data = tumb_dat;
             
-//            NSLog(@"%@", tumblr_data);
+            //            NSLog(@"%@", tumblr_data);
             singleton_universal.universal_tumblr_feed = [[NSMutableDictionary alloc] init];
             [singleton_universal.universal_tumblr_feed setObject:tumblr_data forKey:@"tumblr_data"];
             [singleton_universal.universal_tumblr_feed setObject:@"tumblr" forKey:@"type"];
@@ -117,14 +117,14 @@
     
     
 }
-+(void)fetchInstagramFeed:(NSString *)hashtag singleton:(HashtagDataClass *)singleton_universal{
++(void)fetchInstagramFeed:(NSString *)hashtag singleton:(ProfileDataClass *)singleton_universal{
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     NSString *access = [[NSUserDefaults standardUserDefaults]
                         stringForKey:@"instagram_access_token"];
     hashtag = [hashtag stringByReplacingOccurrencesOfString:@"#" withString:@""];
     NSString *instagram_base_url = [NSString stringWithFormat:@"https://api.instagram.com/v1/tags/%@/media/recent?access_token=%@", hashtag, access];
-//    NSString *instagram_feed_url =[instagram_base_url stringByAppendingString:@"&count=30"];
-     NSString *instagram_feed_url =[instagram_base_url stringByAppendingString:@""];
+    //    NSString *instagram_feed_url =[instagram_base_url stringByAppendingString:@"&count=30"];
+    NSString *instagram_feed_url =[instagram_base_url stringByAppendingString:@""];
     
     NSString *instagram_user_feed = [NSString stringWithFormat:instagram_feed_url];
     NSURL *url = [NSURL URLWithString:instagram_feed_url];
@@ -139,7 +139,7 @@
                           error:&error];
     
     NSArray *instagram_data = [json objectForKey:@"data"]; //2
-//    NSLog(@"%@", instagram_data);
+    //    NSLog(@"%@", instagram_data);
     //NSLog(@"%d",[instagram_data count]);
     singleton_universal.universal_instagram_feed = [[NSMutableDictionary alloc] init];
     [singleton_universal.universal_instagram_feed setObject:instagram_data forKey:@"instagram_data"];
@@ -147,7 +147,7 @@
     
     
 }
-+(void)addTwitterToFeed:(HashtagDataClass *)singleton_universal{
++(void)addTwitterToFeed:(ProfileDataClass *)singleton_universal{
     
     NSMutableDictionary *test = [singleton_universal.universal_twitter_feed objectForKey:@"twitter_data"];
     
@@ -160,7 +160,7 @@
     //NSLog(@"%d", [[singleton_universal.universal_feed objectForKey:@"twitter_entry"] count]);
     [singleton_universal.mainTableView reloadData];
 }
-+(void)addInstagramFeed:(HashtagDataClass *)singleton_universal{
++(void)addInstagramFeed:(ProfileDataClass *)singleton_universal{
     //First check which feeds to consolidate
     NSString *documentsDirectory = [NSHomeDirectory()
                                     stringByAppendingPathComponent:@"Documents"];
@@ -182,7 +182,7 @@
     
 }
 
-+(void)sortUniversalFeedByTime:(HashtagDataClass *)singleton_universal{
++(void)sortUniversalFeedByTime:(ProfileDataClass *)singleton_universal{
     
     NSMutableArray *temp = [[NSMutableArray alloc] initWithArray:singleton_universal.universal_feed_array];
     NSMutableArray *insert = [[NSMutableArray alloc] init];

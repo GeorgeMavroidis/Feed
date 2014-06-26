@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5E19E638195A59290084A260 /* ProfileFunctions.m in Sources */ = {isa = PBXBuildFile; fileRef = 5E19E637195A59290084A260 /* ProfileFunctions.m */; };
+		5E19E63B195A5AA60084A260 /* ProfileDataClass.m in Sources */ = {isa = PBXBuildFile; fileRef = 5E19E63A195A5AA60084A260 /* ProfileDataClass.m */; };
 		5E2E803A18D110DE00707838 /* InstagramCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 5E2E803918D110DE00707838 /* InstagramCell.m */; };
 		5E2E803D18D11BB100707838 /* heart_small.png in Resources */ = {isa = PBXBuildFile; fileRef = 5E2E803C18D11BB100707838 /* heart_small.png */; };
 		5E2E803F18D11C0E00707838 /* speech_bubble.png in Resources */ = {isa = PBXBuildFile; fileRef = 5E2E803E18D11C0E00707838 /* speech_bubble.png */; };
@@ -167,6 +169,10 @@
 
 /* Begin PBXFileReference section */
 		44CF96245CB34D968A618606 /* Pods.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = Pods.xcconfig; path = Pods/Pods.xcconfig; sourceTree = "<group>"; };
+		5E19E636195A59290084A260 /* ProfileFunctions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfileFunctions.h; sourceTree = "<group>"; };
+		5E19E637195A59290084A260 /* ProfileFunctions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProfileFunctions.m; sourceTree = "<group>"; };
+		5E19E639195A5AA60084A260 /* ProfileDataClass.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfileDataClass.h; sourceTree = "<group>"; };
+		5E19E63A195A5AA60084A260 /* ProfileDataClass.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProfileDataClass.m; sourceTree = "<group>"; };
 		5E2E803818D110DE00707838 /* InstagramCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = InstagramCell.h; sourceTree = "<group>"; };
 		5E2E803918D110DE00707838 /* InstagramCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = InstagramCell.m; sourceTree = "<group>"; };
 		5E2E803C18D11BB100707838 /* heart_small.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = heart_small.png; sourceTree = "<group>"; };
@@ -504,6 +510,8 @@
 				5EADE2E518D74E28008C60BB /* CreationFunctions.m */,
 				5E452BA71952334900A9C52D /* HashtagFunctions.h */,
 				5E452BA81952334900A9C52D /* HashtagFunctions.m */,
+				5E19E636195A59290084A260 /* ProfileFunctions.h */,
+				5E19E637195A59290084A260 /* ProfileFunctions.m */,
 			);
 			name = CreationFunctions;
 			sourceTree = "<group>";
@@ -579,6 +587,8 @@
 				5E8952AC18D0E90C00806BE9 /* DataClass.m */,
 				5E452BAA1952410E00A9C52D /* HashtagDataClass.h */,
 				5E452BAB1952410E00A9C52D /* HashtagDataClass.m */,
+				5E19E639195A5AA60084A260 /* ProfileDataClass.h */,
+				5E19E63A195A5AA60084A260 /* ProfileDataClass.m */,
 				5E452BA6195217F700A9C52D /* Profile */,
 				5E452B9F1951FF1200A9C52D /* Hashtag */,
 				5E711A3F18BCD814002763F7 /* Main View */,
@@ -1018,6 +1028,7 @@
 				5EB46E1418D4FCDB003EF549 /* STTwitterHTML.m in Sources */,
 				5E452BAC1952410E00A9C52D /* HashtagDataClass.m in Sources */,
 				5EAFE8DC191E46810027567E /* TumblrCell.m in Sources */,
+				5E19E638195A59290084A260 /* ProfileFunctions.m in Sources */,
 				5EB46E1018D4FCDB003EF549 /* NSString+STTwitter.m in Sources */,
 				5EB46E4618D55E3D003EF549 /* NSData+ImageContentType.m in Sources */,
 				5EADE2E618D74E28008C60BB /* CreationFunctions.m in Sources */,
@@ -1028,6 +1039,7 @@
 				5EB19BBC18AC981F00DCA71A /* FeedLoginViewController.m in Sources */,
 				5EB46E1A18D4FCDB003EF549 /* STHTTPRequest.m in Sources */,
 				5EB46E3F18D55DE8003EF549 /* UIButton+WebCache.m in Sources */,
+				5E19E63B195A5AA60084A260 /* ProfileDataClass.m in Sources */,
 				5EAD979018ADD54C004BF31E /* FeedConnectViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
