@@ -19,6 +19,7 @@
 @property (nonatomic, strong) UIImageView *profile_image_view;
 @property (nonatomic, strong) UIImageView *reblog_view;
 @property (nonatomic, strong) UIImageView *share_view;
+@property (nonatomic, strong) UIImageView *heart_view;
 @property (nonatomic, strong) UILabel *username;
 
 @property (nonatomic, strong) NSString *unique_id;

@@ -56,7 +56,9 @@
 +(void)favoriteTweet:(NSString *)media;
 
 
++(int)returnIndex:(NSMutableArray *)insert eTI:(NSTimeInterval)equalizedTimeInterval curIn:(int)index;
 + (void)fadeInLayer:(CALayer *)l;
 
 
++(void)fetchInstagramLikes:(DataClass *)singleton_universal;
 @end

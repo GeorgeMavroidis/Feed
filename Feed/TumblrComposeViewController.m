@@ -8,11 +8,17 @@
 
 #import "TumblrComposeViewController.h"
 #import "UIImageView+WebCache.h"
+#import "AsyncImageView.h"
 #import <TMAPIClient.h>
 #import "DataClass.h"
 #import <QuartzCore/QuartzCore.h>
 
-@interface TumblrComposeViewController ()
+@interface TumblrComposeViewController (){
+    UIScrollView *mainComposeScrollView;
+    UIScrollView *s;
+    UIImageView *profile_picture;
+    UILabel *user_name;
+}
 
 @end
 @implementation TumblrComposeViewController
@@ -85,7 +91,7 @@
     [post addGestureRecognizer:sendPost];
     post.userInteractionEnabled = YES;
     
-    UIScrollView *mainComposeScrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(0,kNavBar.frame.size.height+10, screenWidth, screenHeight)];
+    mainComposeScrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(0,kNavBar.frame.size.height+10, screenWidth, screenHeight)];
     [mainComposeScrollView setContentSize:CGSizeMake(mainComposeScrollView.bounds.size.width, mainComposeScrollView.bounds.size.height+5)];
     [mainComposeScrollView setShowsVerticalScrollIndicator:NO];
     mainComposeScrollView.keyboardDismissMode = UIScrollViewKeyboardDismissModeInteractive;
@@ -110,28 +116,83 @@
     UIView *footerView = [[UIView alloc] initWithFrame:CGRectMake(10, mainCompose.frame.size.height-30, screenWidth-40, 30)];
     [mainCompose addSubview:footerView];
     
-    UIImageView *profile_picture = [[UIImageView alloc] initWithFrame:CGRectMake(0, 10, 30, 30)];
+    profile_picture = [[UIImageView alloc] initWithFrame:CGRectMake(0, 10, 30, 30)];
     [headerCompose addSubview:profile_picture];
+    
+    UITapGestureRecognizer *t = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(changeUser)];
+    UIView *clicker = [[UIView alloc] initWithFrame:CGRectMake(0, 0, screenWidth, 40)];
+//    [mainComposeScrollView addSubview:clicker];
+    [clicker setBackgroundColor:[UIColor blackColor]];
+    [mainComposeScrollView setUserInteractionEnabled:YES];
+    [clicker addGestureRecognizer:t];
+    [clicker setUserInteractionEnabled:YES];
     // Do any additional setup after loading the view.
     
     
     NSDictionary *defTumb = [[NSDictionary alloc] init];
     
-    defTumb = [singleton_universal.tumblrBlogs objectAtIndex:3];
+    defTumb = [singleton_universal.tumblrBlogs objectAtIndex:0];
     
     chosen_blog = [defTumb objectForKey:@"name"];
     [profile_picture setImageWithURL:[NSURL URLWithString:[self returnTumblrProfilePicture:chosen_blog]] placeholderImage:[UIImage imageNamed:@"insta_placeholder.png"]];
     
-    UILabel *user_name = [[UILabel alloc] initWithFrame:CGRectMake(40, 15, screenWidth-50, 20)];
+    user_name = [[UILabel alloc] initWithFrame:CGRectMake(40, 15, screenWidth-50, 20)];
     user_name.text = [defTumb objectForKey:@"name"];
     user_name.font = [UIFont fontWithName:@"ArialRoundedMTBold" size:14.0f];
     [user_name setTextColor:[UIColor blackColor]];
     [headerCompose addSubview:user_name];
     
+    [user_name setUserInteractionEnabled:YES];
+    [user_name addGestureRecognizer:t];
+    
     UIView *lineView = [[UIView alloc] initWithFrame:CGRectMake(10,45, screenWidth-40, 0.5)];
     lineView.backgroundColor = [UIColor lightGrayColor];
     lineView.alpha = 0.4;
     [mainCompose addSubview:lineView];
+    
+}
+-(void)changeUser{
+    CGRect screenRect = [[UIScreen mainScreen] bounds];
+    CGFloat screenWidth = screenRect.size.width;
+    CGFloat screenHeight = screenRect.size.height;
+    s = [[UIScrollView alloc] initWithFrame:CGRectMake(20, 40, screenWidth, 200 )];
+    [s setBackgroundColor:[UIColor whiteColor]];
+//    [s setBackgroundColor:[UIColor blackColor]];
+    [mainComposeScrollView addSubview:s];
+    DataClass *su = [DataClass getInstance];
+    
+    int numberOfBlogs = [su.tumblrBlogs count];
+    for(int i =0; i < numberOfBlogs; i++){
+        UIView *temp = [[UIView alloc] initWithFrame:CGRectMake(0, 40*i, s.frame.size.width, 40)];
+        [s addSubview:temp];
+        
+        UILabel *tt = [[UILabel alloc] initWithFrame:CGRectMake(40, 40*i, 200, 40)];
+        tt.text = [[su.tumblrBlogs objectAtIndex:i] objectForKey:@"name"];
+        [s addSubview:tt];
+        
+        UIImageView *ti = [[UIImageView alloc] initWithFrame:CGRectMake(0, 40*i+5, 30, 30)];
+//        [ti setImageWithURL:[NSURL URLWithString:[self returnTumblrProfilePicture:tt.text]] placeholderImage:[UIImage imageNamed:@"insta_placeholder.png"]];
+        ti.imageURL = [NSURL URLWithString:[self returnTumblrProfilePicture:tt.text]];
+        [s addSubview:ti];
+        
+        UITapGestureRecognizer *m = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(actualChange:)];
+        [tt setUserInteractionEnabled:YES];
+        [ti setUserInteractionEnabled:YES];
+//        [ti addGestureRecognizer:m];
+        [tt addGestureRecognizer:m];
+        
+    }
+    [s setContentSize:CGSizeMake(mainComposeScrollView.frame.size.width-100, numberOfBlogs*40+40)];
+    
+    NSLog(@"here");
+}
+-(void)actualChange:(UITapGestureRecognizer *) resp{
+    UILabel *m = (UILabel *)resp.view;
+    NSLog(m.text);
+    [s removeFromSuperview];
+    chosen_blog = m.text;
+    user_name.text = m.text;
+    profile_picture.imageURL = [NSURL URLWithString:[self returnTumblrProfilePicture:m.text]];
     
 }
 -(NSString *)returnTumblrProfilePicture:(NSString *)username{

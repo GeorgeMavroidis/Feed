@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 @interface DataClass : NSObject {
     NSString *str;
-    NSMutableDictionary *universal_instagram_feed, *universal_twitter_feed, *universal_feed, *universal_facebook_feed, *universal_tumblr_feed;
+    NSMutableDictionary *universal_instagram_feed, *universal_twitter_feed, *universal_feed, *universal_facebook_feed, *universal_tumblr_feed, *universal_instagram_likes;
     UITableView *mainTableView;
 }
 @property(nonatomic,retain)NSString *str;
@@ -34,5 +34,6 @@
 @property(nonatomic, retain)UIWebView *t;
 
 
+@property(nonatomic, retain)NSMutableDictionary *universal_instagram_likes;
 +(DataClass*)getInstance;
 @end

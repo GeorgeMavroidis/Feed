@@ -24,11 +24,12 @@
 #import "AsyncImageView.h"
 #import "HashtagSearch.h"
 #import "ProfileView.h"
+#import "FeedComposeViewController.h"
+#import "MBProgressHUD.h"
 
 
 @interface FeedMainViewController (){
     DataClass *singleton_universal;
-    UITableView *main_tableView;
     int height;
     UIRefreshControl *refresh;
     UIView *headerView, *headerViewNew;
@@ -42,13 +43,14 @@
     UIView *personalFeed;
     NSUserDefaults *defaults;
     UISearchBar *searchBar;
+    IBOutlet UIPageControl *pageControl;
     NSMutableArray *local_universal_feed_array;
+    FeedComposeViewController *compose;
+    
 }
-
 @end
-
 @implementation FeedMainViewController
-
+@synthesize main_tableView;
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
     self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
@@ -68,6 +70,7 @@
     self.title = @"Feed";
 }
 -(void)viewWillAppear:(BOOL)animated{
+    
     [super viewWillAppear:animated];
     
     self.navigationController.navigationBar.tintColor = [UIColor blackColor];
@@ -90,16 +93,25 @@
     singleton_universal.universal_feed = [[NSMutableDictionary alloc] init];
     singleton_universal.universal_feed_array = [[NSMutableArray alloc] init];
     local_universal_feed_array = [[NSMutableArray alloc] init];
+//    [defaults setObject:local_universal_feed_array forKey:@"main_lufa"];
+    
     [CreationFunctions fetchFacebookFeed:singleton_universal];
     
     //[CreationFunctions createUniversalFeed:singleton_universal];
-    [CreationFunctions sortUniversalFeedByTime:singleton_universal];
-    [self getFeeds];
+//    [CreationFunctions sortUniversalFeedByTime:singleton_universal];
+    NSData *data = [defaults objectForKey:@"stored_feed"];
+    if (data != nil){
+        NSArray *savedArray = [NSKeyedUnarchiver unarchiveObjectWithData:data];
+        local_universal_feed_array = [NSMutableArray arrayWithArray: savedArray];
+    }else{
+        [self getFeeds];
+    }
     //[NSThread detachNewThreadSelector:@selector(getFeeds) toTarget:self withObject:nil];
     
    
     CGRect screenRect = [[UIScreen mainScreen] bounds];
-    main_tableView = [[UITableView alloc]initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height-0) style:UITableViewStylePlain];
+    main_tableView = [[UITableView alloc]initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height) style:UITableViewStylePlain];
+    [main_tableView setContentInset:UIEdgeInsetsMake(40,0,0,0)];
     
     main_tableView.scrollEnabled = YES;
     main_tableView.showsVerticalScrollIndicator = YES;
@@ -152,7 +164,7 @@
 //    [self.navigationController.navigationBar setBackgroundImage:[UIImage new]  forBarMetrics:UIBarMetricsDefault];
 //    self.navigationController.navigationBar.shadowImage = [UIImage new];
 //    self.navigationController.navigationBar.translucent = YES;
-    self.navigationController.view.backgroundColor = [UIColor clearColor];
+    self.navigationController.view.backgroundColor = [UIColor redColor];
     [self.navigationController.navigationBar setTitleTextAttributes:@{NSForegroundColorAttributeName : [UIColor blackColor]}];
     
     UIBarButtonItem * addButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCompose target:self action:@selector(create)];
@@ -174,9 +186,13 @@
     [searchbtn addTarget:self action:@selector(search) forControlEvents:UIControlEventTouchUpInside];
     
     headerViewNew = [[UIView alloc] initWithFrame:CGRectMake(0, -40, screenWidth, 42)];
-    [headerViewNew setBackgroundColor:[UIColor whiteColor]];
+    headerViewNew = [[UIView alloc] initWithFrame:CGRectMake(0, 0, screenWidth, 42)];
+    [headerViewNew setBackgroundColor:[UIColor clearColor]];
 //    [headerViewNew setAlpha:0.8];
-    
+    UIView *tm = [[UIView alloc] initWithFrame:CGRectMake(screenWidth-50,0, 50, 40)];
+
+    [tm addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(create)] ];
+    [tm setUserInteractionEnabled:YES];
     [headerViewNew addSubview:btn];
 //    [headerViewNew addSubview:searchbtn];
     [headerViewNew addSubview:compbtn];
@@ -184,6 +200,7 @@
     
     headerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, screenWidth, 42)];
     [headerView setBackgroundColor:[UIColor whiteColor]];
+    [headerViewNew addSubview:tm];
 //    [self.view addSubview:headerView];
     
     
@@ -298,15 +315,16 @@
     [instagramSwitch addTarget:self action:@selector(instagramSwitched:) forControlEvents:UIControlEventValueChanged];
     
     personalFeed = [[UIView alloc] initWithFrame:CGRectMake(0, 200, screenWidth, screenHeight*2)];
+    personalFeed = [[UIView alloc] initWithFrame:CGRectMake(0, 0, screenWidth, screenHeight*2)];
     [profile_content_scroll addSubview:personalFeed];
 //    [personalFeed.layer setCornerRadius:30.0f];
-    [personalFeed setBackgroundColor:[UIColor blackColor]];
+    [personalFeed setBackgroundColor:[UIColor clearColor]];
     [personalFeed setHidden:YES];
     
     UIPanGestureRecognizer* pgr = [[UIPanGestureRecognizer alloc]
                                    initWithTarget:self
                                    action:@selector(personalPan:)];
-    [personalFeed addGestureRecognizer:pgr];
+//    [personalFeed addGestureRecognizer:pgr];
     
     searchBar = [[UISearchBar alloc] initWithFrame:CGRectMake(40, 0, screenWidth-80, 40)];
     [headerViewNew addSubview:searchBar];
@@ -330,13 +348,19 @@
     profile_image.layer.cornerRadius = 30/2;
 //    [profile_image setHidden:YES];
     
-    UITableView *personal_table_view = [[UITableView alloc] initWithFrame:CGRectMake(0, 40, screenWidth, screenHeight+100)];
-    [personalFeed addSubview:personal_table_view];
+    UITableView *personal_table_view = [[UITableView alloc] initWithFrame:CGRectMake(0, 40, screenWidth, screenHeight)];
+//    [personalFeed addSubview:personal_table_view];
     
     
     [self.view addSubview:headerViewNew];
     
+    compose = [[FeedComposeViewController alloc] init];
+    compose.view.frame = CGRectMake(0, screenHeight, screenWidth, screenHeight);
+    //TumblrComposeViewController *compose = [[TumblrComposeViewController alloc] init];
+    compose.view.alpha = 0.95;
+    [singleton_universal.mainViewController addChildViewController:compose];
     
+    [singleton_universal.mainViewController.view addSubview:compose.view];
     
    }
 - (void)searchBarSearchButtonClicked:(UISearchBar *)searchBar {
@@ -422,7 +446,30 @@
     }
 }
 - (IBAction)create{
-    NSLog(@"test");
+    CGRect screenRect = [[UIScreen mainScreen] bounds];
+    CGFloat screenWidth = screenRect.size.width;
+    CGFloat screenHeight = screenRect.size.height;
+    
+    compose = [[FeedComposeViewController alloc] init];
+    compose.view.frame = CGRectMake(0, screenHeight, screenWidth, screenHeight);
+    //TumblrComposeViewController *compose = [[TumblrComposeViewController alloc] init];
+    compose.view.alpha = 0.95;
+    [self addChildViewController:compose];
+    
+    [self.view addSubview:compose.view];
+    
+    [UIView animateWithDuration:0.5
+                          delay:0.0
+                        options: UIViewAnimationCurveEaseOut
+                     animations:^{
+                         CGRect old_frame = compose.view.frame;
+                         old_frame.origin.y = 0;
+                         compose.view.frame = old_frame;
+                     }
+                     completion:^(BOOL finished){
+                         //                         NSLog(@"Done!");
+                     }];
+
 }
 -(IBAction)search{
     
@@ -432,65 +479,81 @@
     CGRect screenRect = [[UIScreen mainScreen] bounds];
     CGFloat screenWidth = screenRect.size.width;
     CGFloat screenHeight = screenRect.size.height;
-    if(profile_view.frame.size.width != 0){
-        [UIView animateWithDuration:0.25
-                              delay:0.0
-                            options: UIViewAnimationCurveEaseOut
-                         animations:^{
-                             CGRect new_frame = profile_view.frame;
-                             new_frame.origin.y = 23;
-                             new_frame.origin.x = 24;
-                             new_frame.size.height = 0;
-                             new_frame.size.width = 0;
-                             profile_view.frame = new_frame;
-                             
-                             profile_content_scroll.frame = CGRectMake(30, 20, 0, 0);
-                             headerImage.frame = CGRectMake(30, 20, 0, 0);
-                             profile_image.frame = CGRectMake(10, 5, 30, 30);
-                             profile_image.layer.cornerRadius = 30/2;
-//                             [profile_image setHidden:YES];
-                             
-                             [facebookContainer setHidden:YES];
-                             [twitterContainer setHidden:YES];
-                             [tumblrContainer setHidden:YES];
-                             [instagramContainer setHidden:YES];
-                             [personalFeed setHidden:YES];
-                             
-                         }
-                         completion:^(BOOL finished){
-                             
-                             //                             NSLog(@"Done!");
-                         }];
-    }else{
-        [UIView animateWithDuration:0.25
-                              delay:0.0
-                            options: UIViewAnimationCurveEaseOut
-                         animations:^{
-                             CGRect new_frame = profile_view.frame;
-                             new_frame.origin.y = 40;
-                             new_frame.origin.x = 0;
-                             new_frame.size.height = screenHeight-40;
-                             new_frame.size.width = screenWidth;
-                             profile_view.frame = new_frame;
-                             
-                             profile_content_scroll.frame = CGRectMake(0, 0, screenWidth, screenHeight-40);
-                             headerImage.frame = CGRectMake(0, 0, screenWidth, 120);
-                             profile_image.frame = CGRectMake(screenWidth/2-50, 100, 100, 100);
-                             profile_image.layer.cornerRadius = 100/2;
-                             [profile_image setHidden:NO];
-                             [facebookContainer setHidden:NO];
-                             [twitterContainer setHidden:NO];
-                             [tumblrContainer setHidden:NO];
-                             [instagramContainer setHidden:NO];
-                             [personalFeed setHidden:NO];
-                             
-                             [headerImage setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
-                            
-                         }
-                         completion:^(BOOL finished){
-                             //                             NSLog(@"Done!");
-                         }];
-    }
+    
+    ProfileView *tp = [[ProfileView alloc] initForSelf];
+    [self.navigationController pushViewController:tp animated:YES];
+    
+//    if(profile_view.frame.size.width != 0){
+//        [UIView animateWithDuration:0.25
+//                              delay:0.0
+//                            options: UIViewAnimationCurveEaseOut
+//                         animations:^{
+//                             CGRect new_frame = profile_view.frame;
+//                             new_frame.origin.y = 23;
+//                             new_frame.origin.x = 24;
+//                             new_frame.size.height = 0;
+//                             new_frame.size.width = 0;
+//                             profile_view.frame = new_frame;
+//                             
+//                             profile_content_scroll.frame = CGRectMake(30, 20, 0, 0);
+//                            
+//                             headerImage.frame = CGRectMake(30, 20, 0, 0);
+//                             profile_image.frame = CGRectMake(10, 5, 30, 30);
+//                             profile_image.layer.cornerRadius = 30/2;
+////                             [profile_image setHidden:YES];
+//                             
+//                             [facebookContainer setHidden:YES];
+//                             [twitterContainer setHidden:YES];
+//                             [tumblrContainer setHidden:YES];
+//                             [instagramContainer setHidden:YES];
+//                             [personalFeed setHidden:YES];
+//                             
+////                             main_tableView.frame = CGRectMake(0, -40, self.view.frame.size.width, self.view.frame.size.height+40);
+//                             
+//                         }
+//                         completion:^(BOOL finished){
+//                             
+//                             //                             NSLog(@"Done!");
+//                         }];
+//    }else{
+//        [UIView animateWithDuration:0.25
+//                              delay:0.0
+//                            options: UIViewAnimationCurveEaseOut
+//                         animations:^{
+//                             CGRect new_frame = profile_view.frame;
+//                             new_frame.origin.y = 0;
+//                             new_frame.origin.x = 0;
+//                             new_frame.size.height = screenHeight-40;
+//                             new_frame.size.width = screenWidth;
+//                             profile_view.frame = new_frame;
+//                             
+//                             profile_image.frame = CGRectMake(10, 5, 30, 30);
+//                             
+//                             profile_content_scroll.frame = CGRectMake(0, 0, screenWidth, screenHeight);
+//                             headerImage.frame = CGRectMake(0, 0, screenWidth, 120);
+////                             profile_image.frame = CGRectMake(screenWidth/2-50, 100, 100, 100);
+////                             profile_image.layer.cornerRadius = 100/2;
+//                             [profile_image setHidden:NO];
+//                             [facebookContainer setHidden:NO];
+//                             [twitterContainer setHidden:NO];
+//                             [tumblrContainer setHidden:NO];
+//                             [instagramContainer setHidden:NO];
+//                             [personalFeed setHidden:NO];
+//                             
+//                             
+//                             ProfileView *tp = [[ProfileView alloc] initWithProfile:@"georgemavroidis" type:@"self"];
+//                             [self addChildViewController:tp];
+//                             tp.view.frame = CGRectMake(0, 0, screenWidth, screenHeight);
+////                             [tp.main_tableView setContentInset:UIEdgeInsetsMake(40,0,0,0)];
+//                             //    tp.view.frame = CGRectMake(0, 40, screenWidth, screenHeight+100);
+//                             [personalFeed addSubview:tp.view];
+//                             [headerImage setAutoresizingMask:UIViewAutoresizingFlexibleWidth];
+//                            
+//                         }
+//                         completion:^(BOOL finished){
+//                             //                             NSLog(@"Done!");
+//                         }];
+//    }
 }
 - (void)facebookSwitched:(id)sender
 {
@@ -538,15 +601,27 @@
 - (void)refreshTable{
     [refresh beginRefreshing];
     
-    //[CreationFunctions fetchInstagramFeed:singleton_universal];
-    //[CreationFunctions fetchTwitterFeed:singleton_universal];
-    //[CreationFunctions createUniversalFeed:singleton_universal];
-    //[self getFeeds]; - this just adds to the bottom of the singleton feed - create new singleton - then switch maybe
+    [singleton_universal.universal_facebook_feed removeAllObjects];
+    [singleton_universal.universal_feed_array removeAllObjects];
+    [singleton_universal.universal_instagram_feed removeAllObjects];
+    [singleton_universal.universal_tumblr_feed removeAllObjects];
+    [singleton_universal.universal_twitter_feed removeAllObjects];
+    
+    
+    [self getFeeds];
     local_universal_feed_array = singleton_universal.universal_feed_array;
     [main_tableView reloadData];
     [main_tableView setNeedsDisplay];
     [refresh endRefreshing];
     
+    
+}
+-(void)update{
+    DataClass *d = [DataClass getInstance];
+    local_universal_feed_array = singleton_universal.universal_feed_array;
+    [defaults setObject:[NSKeyedArchiver archivedDataWithRootObject:[NSArray arrayWithArray:local_universal_feed_array]]  forKey:@"stored_feed"];
+    
+//    [defaults setObject:[NSKeyedArchiver archivedDataWithRootObject:(DataClass *)d  forKey:@"stored_data_class"];
     
 }
 -(void)getFeeds{
@@ -558,7 +633,8 @@
                                                      error:NULL];
     
     if([content isEqualToString:@"yes"]){
-       [CreationFunctions fetchInstagramFeed:singleton_universal];
+        [CreationFunctions fetchInstagramFeed:singleton_universal];
+//        [CreationFunctions fetchInstagramLikes:singleton_universal];
     }
     
     storePath = [documentsDirectory stringByAppendingPathComponent:@"twitter_auth.txt"];
@@ -566,6 +642,7 @@
                                         encoding:NSUTF8StringEncoding
                                            error:NULL];
     if([content isEqualToString:@"yes"]){
+        
         [CreationFunctions fetchTwitterFeed:singleton_universal];
     }
     
@@ -585,10 +662,13 @@
     }
     
     [CreationFunctions createUniversalFeed:singleton_universal];
-    [CreationFunctions sortUniversalFeedByTime:singleton_universal];
+//    [CreationFunctions sortUniversalFeedByTime:singleton_universal];
     local_universal_feed_array  = singleton_universal.universal_feed_array;
+    
     [main_tableView reloadData];
+    
 }
+
 - (void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];
@@ -608,6 +688,8 @@
     int facebook_count =[[singleton_universal.universal_feed objectForKey:@"facebook_entry"] count];
     int tumblr_count =[[singleton_universal.universal_feed objectForKey:@"tumblr_entry"] count];*/
     int local_count = [local_universal_feed_array count];
+//    int main_local_count = [[defaults objectForKey:@"main_lufa"] count];
+//    NSLog(@"main %d", main_local_count);
     int main_count = [singleton_universal.universal_feed_array count];
     return local_count;
 }
@@ -738,88 +820,91 @@
         }*/
     //}
     
-    CGPoint scrollVelocity = [scrollView.panGestureRecognizer velocityInView:scrollView.superview];
-    if (scrollVelocity.y > 0.0f){
-        
-        CGRect new_frame = headerViewNew.frame;
-        if(new_frame.origin.y < 0){
-            new_frame.origin.y += 1;
-            headerViewNew.frame = new_frame;
-        }
-        
-        /*[UIView animateWithDuration:0.5
-                              delay:0.0
-                            options: UIViewAnimationCurveEaseOut
-                         animations:^{
-                             CGRect new_frame = headerViewNew.frame;
-                             new_frame.origin.y = 0;
-                             headerViewNew.frame = new_frame;
-                         }
-                         completion:^(BOOL finished){
-                         }];
-        */
-       
-    }
-    else if (scrollVelocity.y < 0.0f){
-        CGRect new_frame = headerViewNew.frame;
-        if(new_frame.origin.y > -headerViewNew.frame.size.height){
-            new_frame.origin.y -= 1;
-            headerViewNew.frame = new_frame;
-        }
-       /* [UIView animateWithDuration:0.5
-                              delay:0.0
-                            options: UIViewAnimationCurveEaseOut
-                         animations:^{
-                             CGRect new_frame = headerViewNew.frame;
-                             new_frame.origin.y = -headerViewNew.frame.size.height;
-                             headerViewNew.frame = new_frame;
-                             
-                             [searchBar resignFirstResponder];
-                         }
-                         completion:^(BOOL finished){
-                         }];
-        */
-    }
-
-        CGPoint scrollVelo = [t.scrollView.panGestureRecognizer velocityInView:t.scrollView.superview];
-        if (scrollVelo.y > 0.0f){
-            //        NSLog(@"going down");
-            [UIView animateWithDuration:0.5
-                                  delay:0.0
-                                options: UIViewAnimationCurveEaseOut
-                             animations:^{
-                                 CGRect new_frame = closeView.frame;
-                                 new_frame.origin.y = 0;
-                                 closeView.frame = new_frame;
-                             }
-                             completion:^(BOOL finished){
-                                 //                             NSLog(@"Done!");
-                             }];
-            
-        }
-        else if (scrollVelo.y < 0.0f){
-            //        NSLog(@"going up");
-            [UIView animateWithDuration:0.5
-                                  delay:0.0
-                                options: UIViewAnimationCurveEaseOut
-                             animations:^{
-                                 CGRect new_frame = closeView.frame;
-                                 new_frame.origin.y = -closeView.frame.size.height;
-                                 
-                                 closeView.frame = new_frame;
-                                 
-                                 [searchBar resignFirstResponder];
-                             }
-                             completion:^(BOOL finished){
-                                 //                             NSLog(@"Done!");
-                             }];
-            
-        }
-        
+//    CGPoint scrollVelocity = [scrollView.panGestureRecognizer velocityInView:scrollView.superview];
+//    if (scrollVelocity.y > 0.0f){
+//        
+//        CGRect new_frame = headerViewNew.frame;
+//        if(new_frame.origin.y < 0){
+//            new_frame.origin.y += 1;
+//            headerViewNew.frame = new_frame;
+//        }
+//        
+//        /*[UIView animateWithDuration:0.5
+//                              delay:0.0
+//                            options: UIViewAnimationCurveEaseOut
+//                         animations:^{
+//                             CGRect new_frame = headerViewNew.frame;
+//                             new_frame.origin.y = 0;
+//                             headerViewNew.frame = new_frame;
+//                         }
+//                         completion:^(BOOL finished){
+//                         }];
+//        */
+//       
+//    }
+//    else if (scrollVelocity.y < 0.0f){
+//        CGRect new_frame = headerViewNew.frame;
+//        if(new_frame.origin.y > -headerViewNew.frame.size.height){
+//            new_frame.origin.y -= 1;
+//            headerViewNew.frame = new_frame;
+//        }
+//       /* [UIView animateWithDuration:0.5
+//                              delay:0.0
+//                            options: UIViewAnimationCurveEaseOut
+//                         animations:^{
+//                             CGRect new_frame = headerViewNew.frame;
+//                             new_frame.origin.y = -headerViewNew.frame.size.height;
+//                             headerViewNew.frame = new_frame;
+//                             
+//                             [searchBar resignFirstResponder];
+//                         }
+//                         completion:^(BOOL finished){
+//                         }];
+//        */
+//    }
+//
+//        CGPoint scrollVelo = [t.scrollView.panGestureRecognizer velocityInView:t.scrollView.superview];
+//        if (scrollVelo.y > 0.0f){
+//            //        NSLog(@"going down");
+//            [UIView animateWithDuration:0.5
+//                                  delay:0.0
+//                                options: UIViewAnimationCurveEaseOut
+//                             animations:^{
+//                                 CGRect new_frame = closeView.frame;
+//                                 new_frame.origin.y = 0;
+//                                 closeView.frame = new_frame;
+//                             }
+//                             completion:^(BOOL finished){
+//                                 //                             NSLog(@"Done!");
+//                             }];
+//            
+//        }
+//        else if (scrollVelo.y < 0.0f){
+//            //        NSLog(@"going up");
+//            [UIView animateWithDuration:0.5
+//                                  delay:0.0
+//                                options: UIViewAnimationCurveEaseOut
+//                             animations:^{
+//                                 CGRect new_frame = closeView.frame;
+//                                 new_frame.origin.y = -closeView.frame.size.height;
+//                                 
+//                                 closeView.frame = new_frame;
+//                                 
+//                                 [searchBar resignFirstResponder];
+//                             }
+//                             completion:^(BOOL finished){
+//                                 //                             NSLog(@"Done!");
+//                             }];
+//            
+//        }
     
     
+    
+    [searchBar resignFirstResponder];
 
 }
+
+/*
 -(void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate{
     CGPoint scrollVelocity = [scrollView.panGestureRecognizer velocityInView:scrollView.superview];
     if (scrollVelocity.y > 0.0f){
@@ -854,6 +939,6 @@
          }];
         
     }
-}
+}*/
 
 @end

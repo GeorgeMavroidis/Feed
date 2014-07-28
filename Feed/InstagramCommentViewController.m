@@ -10,7 +10,7 @@
 #import "InstagramCommentCell.h"
 #import "UIImageView+WebCache.h"
 #import "CreationFunctions.h"
-
+#import "ProfileView.h"
 #import "AsyncImageView.h"
 
 @interface InstagramCommentViewController ()
@@ -86,7 +86,10 @@
     
     inputTextView = [[UITextView alloc] initWithFrame:CGRectMake(10, 10, inputBar.frame.size.width-90, 30)];
     [inputTextView.layer setCornerRadius:5.0f];
-    
+    UIView *tran = [[UIView alloc] initWithFrame:inputBar.frame];
+    [tran setBackgroundColor:[UIColor blackColor]];
+    [tran setAlpha:0.5];
+    [self.view addSubview:tran];
     placeholderLabel = [[UILabel alloc] initWithFrame:CGRectMake(9.0, .0, inputTextView.frame.size.width - 20.0, 34.0)];
     [placeholderLabel setText:@"Add a comment..."];
     // placeholderLabel is instance variable retained by view controller
@@ -338,7 +341,29 @@
                 }
     
     cell.time.text = created_time;
+    
+    NSString *user_id = [[data objectForKey:@"from"]objectForKey:@"id"];
+    
+    cell.user_id = user_id;
+    UITapGestureRecognizer *tg = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(launchProfile:)];
+    [cell.profile_picture_image_view setUserInteractionEnabled:YES];
+    [cell.profile_picture_image_view addGestureRecognizer:tg];
+    
+    
+    tg = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(launchProfile:)];
+    [cell.username setUserInteractionEnabled:YES];
+    [cell.username addGestureRecognizer:tg];
+    
     return cell;
+    
+}
+-(void)launchProfile:(UITapGestureRecognizer *)recognizer{
+    InstagramCommentCell *test =[[((InstagramCommentCell *) recognizer.view) superview] superview];
+    NSString *name = test.username.text;
+    DataClass *singleton_universal = [DataClass getInstance];
+    
+    ProfileView *profile = [[ProfileView alloc] initForInstagram:name user_id:test.user_id type:@"instagram"];
+    [self.navigationController pushViewController:profile animated:YES];
     
 }
 

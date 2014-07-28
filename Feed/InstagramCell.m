@@ -9,7 +9,7 @@
 #import "InstagramCell.h"
 #import <QuartzCore/QuartzCore.h>
 @implementation InstagramCell
-@synthesize descriptionLabel, username, profile_picture_image_view, main_picture_view, photo_likes, time, caption_username, image_caption, small_chat, small_heart, clock_view, header, comments_count, comments_text, foot, like, foot_comment, media_id;
+@synthesize descriptionLabel, username, profile_picture_image_view, main_picture_view, photo_likes, time, caption_username, image_caption, small_chat, small_heart, clock_view, header, comments_count, comments_text, foot, like, foot_comment, media_id, user_id, like_label, like_image;
 - (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
 {
     self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
@@ -43,10 +43,16 @@
         
        // [self addSubview:caption_username];
         
+        //Changed height from 1000 to 200... and back - need to do this properly
         image_caption = [[UITextView alloc] initWithFrame:CGRectMake(20, 390, screenWidth-40, 1000)];
         
         image_caption.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:14.5f];
-//        image_caption.userInteractionEnabled = NO;
+        image_caption.userInteractionEnabled = YES;
+        
+        image_caption.scrollEnabled = NO;
+        image_caption.editable = NO;
+        image_caption.selectable = NO;
+        
         [image_caption setBackgroundColor:[UIColor clearColor]];
         [self addSubview:image_caption];
         [self addSubview:photo_likes];
@@ -96,7 +102,7 @@
         like.layer.cornerRadius = 2;
         foot.layer.masksToBounds = YES;
         
-        UILabel *like_label = [[UILabel alloc] initWithFrame:CGRectMake(25, -5, like.frame.size.width, like.frame.size.height)];
+        like_label = [[UILabel alloc] initWithFrame:CGRectMake(25, -5, like.frame.size.width, like.frame.size.height)];
         like_label.text = @"Like";
         [like_label setTextColor:[UIColor colorWithWhite:0.5 alpha:1]];
         like_label.font = [UIFont fontWithName:@"HelveticaNeue" size:15.0f];
@@ -108,7 +114,7 @@
         comment_label.font = [UIFont fontWithName:@"HelveticaNeue" size:15.0f];
         [foot_comment addSubview:comment_label];
         
-        UIImageView *like_image = [[UIImageView alloc] initWithFrame:CGRectMake(3, 3, 20,20)];
+        like_image = [[UIImageView alloc] initWithFrame:CGRectMake(3, 3, 20,20)];
         like_image.image = [UIImage imageNamed:@"heart_small.png"];
         [like addSubview:like_image];
         
@@ -130,7 +136,7 @@
         [self addSubview:header];
         
         media_id = [[NSString alloc] init];
-        
+        user_id = [[NSString alloc] init];
     }
     
     return self;

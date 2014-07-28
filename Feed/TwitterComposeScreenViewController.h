@@ -38,4 +38,6 @@
 
 @property (nonatomic, strong) IBOutlet UICollectionView *collectionView;
 
+-(id)initWithName:(NSString *)replyTo stats:(NSString *)state;
+
 @end

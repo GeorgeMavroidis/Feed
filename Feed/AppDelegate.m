@@ -14,6 +14,8 @@
 #import <GooglePlus/GooglePlus.h>
 #import <TMAPIClient.h>
 #import "FeedMainViewController.h"
+#import "NewConnectView.h"
+
 
 @implementation AppDelegate{
     UINavigationController *mainNavController;
@@ -23,6 +25,13 @@ static NSString * const kClientId = @"1067683679558-8870rh1fl1d8hi1sjd6neeecgjtq
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [TMAPIClient sharedInstance].OAuthConsumerKey = @"gPPreRGZ96PskkcUk9J0fg70gCjWtI8AfO3aq20Ssenqzj5KIs";
+    [TMAPIClient sharedInstance].OAuthConsumerSecret = @"zDyi5guipOImlfJEAd7Q4aTodo1z7Y3p66cXOvrA4xa6b9gSiI";
+    
+    [TMAPIClient sharedInstance].OAuthToken = [defaults objectForKey:@"Tumblr_OAuthToken"];
+    [TMAPIClient sharedInstance].OAuthTokenSecret = [defaults objectForKey:@"Tumblr_OAuthTokenSecret"];
+    
     [FBLoginView class];
     //FeedConnectViewController *feed = [[FeedConnectViewController alloc] init];
     //[mainNavController pushViewController:feed animated:NO];
@@ -35,6 +44,7 @@ static NSString * const kClientId = @"1067683679558-8870rh1fl1d8hi1sjd6neeecgjtq
     [PFFacebookUtils initializeFacebook];
     [PFTwitterUtils initializeWithConsumerKey:@"4tIoaRQHod1IQ00wtSmRw"
                                consumerSecret:@"S6GATtE4xirn5WlfW79d6aSH4ciMD196hPQuL2g52M8"];
+    
     NSString *documentsDirectory = [NSHomeDirectory()
                                     stringByAppendingPathComponent:@"Documents"];
     NSString *schedule_path = [documentsDirectory
@@ -43,45 +53,35 @@ static NSString * const kClientId = @"1067683679558-8870rh1fl1d8hi1sjd6neeecgjtq
                                                    encoding:NSUTF8StringEncoding
                                                     error:NULL];
     check_facebook = @"no";
-    check_facebook = @"yes";
-    //NSLog(check_facebook);
-    if([check_facebook isEqualToString:@"yes"]){
-        // Whenever a person opens the app, check for a cached session
-        if (FBSession.activeSession.state == FBSessionStateCreatedTokenLoaded) {
-            NSLog(@"here");
-            
-            // If there's one, just open the session silently, without showing the user the login UI
-            //Used to be basic_info
-            [FBSession openActiveSessionWithReadPermissions:@[@"public_profile, user_friends"]
-                                               allowLoginUI:NO
-                                          completionHandler:^(FBSession *session, FBSessionState state, NSError *error) {
-                                              // Handler for session state changes
-                                              // This method will be called EACH time the session state changes,
-                                              // also for intermediate states and NOT just when the session open
-                                              [self sessionStateChanged:session state:state error:error];
-                                              if(error) NSLog(@"%@", [error localizedDescription]);
-                                              NSLog(@"here");
-                                              //NSLog(@"YES");
-                                          }];
-        }else{
-            NSLog(@"not here");
-        }
+//    check_facebook = @"yes";
+    if([[defaults objectForKey:@"twitter"] isEqualToString:@"yes"]){
         
-//        FeedLoginViewController *mainViewController = [[FeedLoginViewController alloc] init];
-//        mainNavController = [[UINavigationController alloc] initWithRootViewController:mainViewController];
-//        [[self window] setRootViewController:mainNavController];
-        
-        FeedMainViewController *connect = [[FeedMainViewController alloc]  init];
+        FeedMainViewController *connect = [[FeedMainViewController alloc] init];
+//        NewConnectView *connect = [[NewConnectView alloc] init];
         [connect.navigationController.navigationItem hidesBackButton];
         mainNavController = [[UINavigationController alloc] initWithRootViewController:connect];
     }else{
-    //NSArray *stack = [NSArray arrayWithObjects:overViewController, tableViewController, newItemViewController, nil];
-    //navController.viewControllers = stack;
-        
-        FeedLoginViewController *mainViewController = [[FeedLoginViewController alloc] init];
-        
-        mainNavController = [[UINavigationController alloc] initWithRootViewController:mainViewController];
-    
+        if([check_facebook isEqualToString:@"yes"]){
+            if (FBSession.activeSession.state == FBSessionStateCreatedTokenLoaded) {
+                [FBSession openActiveSessionWithReadPermissions:@[@"public_profile, user_friends"]
+                                                   allowLoginUI:NO
+                                              completionHandler:^(FBSession *session, FBSessionState state, NSError *error) {
+                                                  [self sessionStateChanged:session state:state error:error];
+                                                  if(error) NSLog(@"%@", [error localizedDescription]);
+                                                  NSLog(@"here");
+                                                  //NSLog(@"YES");
+                                              }];
+            }else{
+                NSLog(@"not here");
+            }
+//            FeedMainViewController *connect = [[FeedMainViewController alloc] init];
+            FeedConnectViewController *connect = [[FeedConnectViewController alloc]  init];
+            [connect.navigationController.navigationItem hidesBackButton];
+            mainNavController = [[UINavigationController alloc] initWithRootViewController:connect];
+        }else{
+            FeedLoginViewController *mainViewController = [[FeedLoginViewController alloc] init];
+            mainNavController = [[UINavigationController alloc] initWithRootViewController:mainViewController];
+        }
     }
     [[self window] setRootViewController:mainNavController];
     
@@ -102,7 +102,7 @@ static NSString * const kClientId = @"1067683679558-8870rh1fl1d8hi1sjd6neeecgjtq
     NSString *check_facebook = [NSString stringWithContentsOfFile:schedule_path
                                                          encoding:NSUTF8StringEncoding
                                                             error:NULL];
-    // return [[TMAPIClient sharedInstance] handleOpenURL:url];
+    return [[TMAPIClient sharedInstance] handleOpenURL:url];
     
     check_facebook = @"no";
     if([check_facebook isEqualToString:@"yes"]){
@@ -136,8 +136,8 @@ static NSString * const kClientId = @"1067683679558-8870rh1fl1d8hi1sjd6neeecgjtq
     }
     
     
-    
-    FeedConnectViewController *feed = [[FeedConnectViewController alloc] init];
+    FeedMainViewController *feed = [[FeedMainViewController alloc] init];
+//    FeedConnectViewController *feed = [[FeedConnectViewController alloc] init];
     [mainNavController pushViewController:feed animated:NO];
   
 }

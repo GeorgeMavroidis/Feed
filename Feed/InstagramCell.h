@@ -30,4 +30,9 @@
 @property (nonatomic, strong) UIView *foot_comment;
 
 @property (nonatomic, strong) NSString *media_id;
+@property (nonatomic, strong) NSString *user_id;
+
+
+@property (nonatomic, strong) UILabel *like_label;
+@property (nonatomic, strong) UIImageView *like_image;
 @end

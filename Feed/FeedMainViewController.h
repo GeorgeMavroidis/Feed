@@ -9,5 +9,8 @@
 #import <UIKit/UIKit.h>
 
 @interface FeedMainViewController : UIViewController <UITableViewDelegate, UITableViewDataSource, UIActionSheetDelegate, UITextViewDelegate, UIWebViewDelegate, UIScrollViewDelegate, UISearchBarDelegate>
+- (void)refreshTable;
+-(void)update;
+@property (nonatomic, strong) UITableView *main_tableView;
 
 @end

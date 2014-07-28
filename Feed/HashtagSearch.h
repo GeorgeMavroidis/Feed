@@ -10,4 +10,5 @@
 
 @interface HashtagSearch : UIViewController <UITableViewDelegate, UITableViewDataSource, UIActionSheetDelegate, UITextViewDelegate, UIWebViewDelegate, UIScrollViewDelegate, UISearchBarDelegate>
 -(id)initWithSearch:(NSString *)search;
+-(void)update;
 @end

@@ -9,7 +9,7 @@
 #import "TumblrCell.h"
 
 @implementation TumblrCell
-@synthesize contentView, textView, tagView, interactView, profile_image_view, username, notes_label, reblog_view, unique_id, reblog_key, share_view;
+@synthesize contentView, textView, tagView, interactView, profile_image_view, username, notes_label, reblog_view, unique_id, reblog_key, share_view, heart_view;
 - (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
 {
     self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
@@ -45,7 +45,7 @@
         share_view.image = [UIImage imageNamed:@"shares.png"];
         reblog_view = [[UIImageView alloc] initWithFrame:CGRectMake(screenWidth-90, 0, 30, 30)];
         reblog_view.image = [UIImage imageNamed:@"reweet.png"];
-        UIImageView *heart_view = [[UIImageView alloc] initWithFrame:CGRectMake(screenWidth-40, 0, 28, 28)];
+        heart_view = [[UIImageView alloc] initWithFrame:CGRectMake(screenWidth-40, 0, 28, 28)];
         heart_view.image = [UIImage imageNamed:@"heart_small.png"];
         [interactView addSubview:share_view];
         [interactView addSubview:reblog_view];

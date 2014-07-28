@@ -114,7 +114,17 @@
     
     [main_tableView reloadData];
     
+    UIImageView *back_btn = [[UIImageView alloc] initWithFrame:CGRectMake(5, 13, 23, 20)];
+    back_btn.image = [UIImage imageNamed:@"arrow_back.png"];
+    [headerViewNew addSubview:back_btn];
 
+}
+-(void)update{
+    [refresh beginRefreshing];
+    local_universal_feed_array = singleton_universal.universal_feed_array;
+    [main_tableView reloadData];
+    [main_tableView setNeedsDisplay];
+    [refresh endRefreshing];
 }
 -(void)fetchFeeds{
     [HashtagFunctions fetchTwitterFeed:searched singleton:singleton_universal];
@@ -180,7 +190,11 @@
     self.navigationController.view.backgroundColor = [UIColor clearColor];
     [self.navigationController.navigationBar setTitleTextAttributes:@{NSForegroundColorAttributeName : [UIColor clearColor]}];
     
+    DataClass *singleton_universal =[DataClass getInstance];
     
+    singleton_universal.mainTableView = main_tableView;
+    //    singleton_universal.mainNavController = self.navigationController;
+    singleton_universal.mainViewController = self;
 }
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {

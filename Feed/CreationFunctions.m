@@ -19,6 +19,7 @@
 #import "InstagramCommentViewController.h"
 #import "TumblrComposeViewController.h"
 #import "HashtagSearch.h"
+#import "FeedMainViewController.h"
 
 @interface MediaInterface : NSObject
     @property (nonatomic, strong) UITapGestureRecognizer *gestureRec;
@@ -116,8 +117,10 @@
     NSString *full_name = [[temp_instagram objectForKey:@"user"]objectForKey:@"full_name"];
     NSString  *created_time = [temp_instagram valueForKey:@"created_time"];
     NSString *get_media_id = [temp_instagram valueForKey:@"id"];
+    NSString *user_has_liked = [temp_instagram valueForKey:@"user_has_liked"];
     
     cell.media_id = get_media_id;
+    cell.user_id = user_id;
     
     NSArray *caption = [temp_instagram objectForKey:@"caption"];
     if(caption != (id)[NSNull null]){
@@ -289,6 +292,7 @@
     NSString *dateString = [dateFormatter stringFromDate:date];
     NSDate *now = [NSDate date];
     NSTimeInterval distanceBetweenDates = [now timeIntervalSinceDate:date];
+    
     double seconds = 1;
     double minutes = 60;
     double hours = minutes*60;
@@ -378,6 +382,11 @@
     cell.main_picture_view.userInteractionEnabled = YES;
     [cell.main_picture_view addGestureRecognizer:tapTwice];
     
+    UITapGestureRecognizer *delLike = [[UITapGestureRecognizer alloc] initWithTarget:self  action:@selector(instagramDelTap:)];
+    delLike.numberOfTapsRequired = 1;
+    cell.like.userInteractionEnabled = YES;
+    [cell.like addGestureRecognizer:delLike];
+    
     UITapGestureRecognizer *commentView = [[UITapGestureRecognizer alloc] initWithTarget:self  action:@selector(loadCommentView:)];
     UITapGestureRecognizer *commentViewMain = [[UITapGestureRecognizer alloc] initWithTarget:self  action:@selector(loadCommentViewMiddle:)];
     cell.foot_comment.userInteractionEnabled = YES;
@@ -385,19 +394,12 @@
     [cell.comments_count setUserInteractionEnabled:YES];
     [cell.comments_count addGestureRecognizer:commentViewMain];
     
-    UITapGestureRecognizer *gr = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(textTapped:)];
-    [gr setNumberOfTapsRequired:1];
-    [cell.image_caption setUserInteractionEnabled:YES];
-    [cell.image_caption setScrollEnabled:NO];
-    [cell.image_caption setEditable:NO];
-    [cell.image_caption addGestureRecognizer:gr];
-    
     
     
     [cell.comments_text setUserInteractionEnabled:YES];
     [cell.comments_text setScrollEnabled:NO];
     [cell.comments_text setEditable:NO];
-    [cell.comments_text addGestureRecognizer:gr];
+//    [cell.comments_text addGestureRecognizer:gr];
 //    [cell.comments_text setBackgroundColor:[UIColor blackColor]];
     
     UITapGestureRecognizer *prof_pic_tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(profile_from_instagram_tap:)];
@@ -409,6 +411,25 @@
     cell.username.userInteractionEnabled = YES;
 //    [cell.username setScrollEnabled:NO];
     [cell.username addGestureRecognizer:prof_user_tap];
+    
+    NSString *uhl = [NSString stringWithFormat:@"%@", user_has_liked];
+    if([uhl isEqualToString:@"1"]){
+        [cell.like setBackgroundColor:[UIColor grayColor]];
+        [cell.like_label setText:@"Liked"];
+        [cell.like_label setTextColor:[UIColor whiteColor]];
+        [cell.like_image setImage:[UIImage imageNamed:@"heart_tumblr.png"]];
+    }
+    
+    UIView *t = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 100, 100)];
+    [t setUserInteractionEnabled:YES];
+    [t setBackgroundColor:[UIColor blueColor]];
+//    [t addGestureRecognizer:gr];
+//    [cell addSubview:t];
+    
+    UITapGestureRecognizer *gr = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(textTappedInsta:)];
+    [gr setNumberOfTapsRequired:1];
+    [cell.image_caption addGestureRecognizer:gr];
+    
     return cell;
 }
 +(void)instagramDoubleTap:(UITapGestureRecognizer *)sender {
@@ -453,6 +474,49 @@
     NSURLConnection *conn = [[NSURLConnection alloc]initWithRequest:request delegate:self];
     if(conn){
         NSLog(@"Connection Successful");
+        [test.like setBackgroundColor:[UIColor grayColor]];
+        [test.like_label setText:@"Liked"];
+        [test.like_label setTextColor:[UIColor whiteColor]];
+        [test.like_image setImage:[UIImage imageNamed:@"heart_tumblr.png"]];
+        
+        DataClass *su = [DataClass getInstance];
+        
+        
+        
+    }
+    else{
+        NSLog(@"Connection could not be made");
+    }
+}
++(void)instagramDelTap:(UITapGestureRecognizer *)sender {
+    //recognizer = (MediaInterface *)media_object.gestureRec;
+    //MediaInterface *test = (MediaInterface*)media_object;
+    //NSLog(test.actual_media_id);
+    InstagramCell *test =[[[((InstagramCell *) sender.view) superview] superview] superview];
+    
+    NSString *temp_media = test.media_id;
+    
+    UITapGestureRecognizer *recognizer = sender;
+    
+    CGRect screenRect = [[UIScreen mainScreen] bounds];
+    CGFloat screenWidth = screenRect.size.width;
+    CGFloat screenHeight = screenRect.size.height;
+    
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *access = [[NSUserDefaults standardUserDefaults]
+                        stringForKey:@"instagram_access_token"];
+    
+    NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
+    [request setURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://api.instagram.com/v1/media/%@/likes?access_token=%@", temp_media, access]]];
+    [request setHTTPMethod:@"DEL"];
+    [request setValue:@"application/x-www-form-urlencoded" forHTTPHeaderField:@"Current-Type"];
+    NSURLConnection *conn = [[NSURLConnection alloc]initWithRequest:request delegate:self];
+    if(conn){
+        NSLog(@"Connection Successful");
+        [test.like setBackgroundColor:[UIColor colorWithWhite: 0.9 alpha:1]];
+        [test.like_label setText:@"Like"];
+        [test.like_label setTextColor:[UIColor colorWithWhite:0.5 alpha:1]];
+        [test.like_image setImage:[UIImage imageNamed:@"heart_small.png"]];
     }
     else{
         NSLog(@"Connection could not be made");
@@ -616,7 +680,7 @@
     
     int addedHeight = [CreationFunctions returnCommentsHeight:indexPath textString:text];
     int threeCommentsHeight = [CreationFunctions returnCommentsHeight:indexPath textString:comments_string];
-    return 480+addedHeight+commentsHeight+threeCommentsHeight;
+    return 450+addedHeight+commentsHeight+threeCommentsHeight;
 
 }
 +(void)fetchInstagramFeed:(DataClass *)singleton_universal{
@@ -648,12 +712,34 @@
     
 
 }
-+(void)fetchTumblrFeed:(DataClass *)singleton_universal{
-    [TMAPIClient sharedInstance].OAuthConsumerKey = @"gPPreRGZ96PskkcUk9J0fg70gCjWtI8AfO3aq20Ssenqzj5KIs";
-    [TMAPIClient sharedInstance].OAuthConsumerSecret = @"zDyi5guipOImlfJEAd7Q4aTodo1z7Y3p66cXOvrA4xa6b9gSiI";
-    [TMAPIClient sharedInstance].OAuthToken = @"5HPnr9RGkFPNsGThFYoBehtBakYg46skHWNeLD9J5tmDHGHPyF";
-    [TMAPIClient sharedInstance].OAuthTokenSecret = @"ok8fhbhadpJGlFFKpT645l6VhQpc53JoIF8WIZhaMCD5eZGVWc";
++(void)fetchInstagramLikes:(DataClass *)singleton_universal{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *access = [[NSUserDefaults standardUserDefaults]
+                        stringForKey:@"instagram_access_token"];
+    NSString *instagram_base_url = @"https://api.instagram.com/v1/users/self/media/liked?access_token=";
+    NSString *instagram_feed_url = [instagram_base_url stringByAppendingString:access];
     
+    NSString *instagram_user_feed = [NSString stringWithFormat:instagram_feed_url];
+    NSURL *url = [NSURL URLWithString:instagram_feed_url];
+    NSData *data = [NSData dataWithContentsOfURL:url];
+    NSData *jsonData = data;
+    //parse out the json data
+    NSError* error;
+    NSDictionary* json = [NSJSONSerialization
+                          JSONObjectWithData:jsonData //1
+                          
+                          options:kNilOptions
+                          error:&error];
+    
+    NSArray *instagram_data = [json objectForKey:@"data"]; //2
+    NSLog(@"data %@", instagram_data);
+    //NSLog(@"%d",[instagram_data count]);
+    singleton_universal.universal_instagram_likes = [[NSMutableDictionary alloc] init];
+    [singleton_universal.universal_instagram_likes setObject:instagram_data forKey:@"instagram_likes"];
+    
+}
++(void)fetchTumblrFeed:(DataClass *)singleton_universal{
+
     NSDictionary *dashboardDict = @{@"limit"  : @"20",
                                     @"type" : @"photo",
                                     @"notes_info" : @"false",
@@ -664,7 +750,7 @@
 //            NSLog(@"%@", result);
             //  NSDictionary *jsonData = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&error];
             NSArray *tumblr_data = [result objectForKey:@"posts"]; //2
-            
+
             singleton_universal.universal_tumblr_feed = [[NSMutableDictionary alloc] init];
             [singleton_universal.universal_tumblr_feed setObject:tumblr_data forKey:@"tumblr_data"];
             [singleton_universal.universal_tumblr_feed setObject:@"tumblr" forKey:@"type"];
@@ -678,6 +764,8 @@
                     NSDictionary *t = result;
                     NSMutableDictionary *blogs = [[result objectForKey:@"user"] objectForKey:@"blogs"];
                     singleton_universal.tumblrBlogs = blogs;
+                    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+                    [defaults setObject:blogs forKey:@"tumblrBlogs"];
 //                    NSLog(@"%@", singleton_universal.tumblrBlogs);
                 }
             }];
@@ -725,7 +813,6 @@
                                   
                                   [self addFacebookToFeed:singleton_universal];
                                   
-                                  [self sortUniversalFeedByTime:singleton_universal];
                                   
                               } else {
                                   NSLog(@"error %@", error.description);
@@ -813,13 +900,23 @@
     singleton_universal.universal_twitter_feed = [[NSMutableDictionary alloc] init];
     
     [twitter getHomeTimelineSinceID:nil
-                              count:100
+                              count:300
                        successBlock:^(NSArray *statuses) {
+                           
 //                           NSLog(@"%@", statuses);
                            [singleton_universal.universal_twitter_feed setObject:statuses forKey:@"twitter_data"];
                            [singleton_universal.universal_twitter_feed setObject:@"twitter" forKey:@"type"];
                            [self addTwitterToFeed:singleton_universal];
-                           [self sortUniversalFeedByTime:singleton_universal];
+                           
+                           dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                               [self sortUniversalFeedByTime:singleton_universal];
+                               dispatch_async(dispatch_get_main_queue(), ^(void){
+                                   
+                                   [singleton_universal.mainTableView reloadData];
+                                   NSLog(@"donezo");
+                               });
+                               
+                           });
                            
                        } errorBlock:^(NSError *error) {
                            NSLog(@"%@",[error localizedDescription]);
@@ -840,6 +937,11 @@
         for(NSMutableDictionary *dat in [singleton_universal.universal_feed objectForKey:@"instagram_entry"]){
             NSMutableDictionary *temp = [[NSMutableDictionary alloc] initWithDictionary:dat];
             [temp setObject:@"instagram" forKey:@"type"];
+            
+            NSString *new_created_at = [temp objectForKey:@"created_time"];
+            NSTimeInterval equalizedTimeInterval = [self returnInstagramTimeInterval:new_created_at];
+            [temp setObject:[NSNumber numberWithLong:(long)equalizedTimeInterval] forKey:@"eti"];
+            
             [singleton_universal.universal_feed_array addObject:temp];
         }
     }
@@ -855,6 +957,11 @@
     for(NSMutableDictionary *dat in [singleton_universal.universal_feed objectForKey:@"twitter_entry"]){
         NSMutableDictionary *temp = [[NSMutableDictionary alloc] initWithDictionary:dat];
         [temp setObject:@"twitter" forKey:@"type"];
+        
+        NSString *created_at = [temp objectForKey:@"created_at"];
+        NSTimeInterval equalizedTimeInterval = [self returnTwitterTimeInterval:created_at];
+        [temp setObject:[NSNumber numberWithLong:(long)equalizedTimeInterval] forKey:@"eti"];
+        
         [singleton_universal.universal_feed_array addObject:temp];
     }
     //NSLog(@"%d", [[singleton_universal.universal_feed objectForKey:@"twitter_entry"] count]);
@@ -884,6 +991,11 @@
         
         NSMutableDictionary *temp = [[NSMutableDictionary alloc] initWithDictionary:dat];
         [temp setObject:@"tumblr" forKey:@"type"];
+        
+        NSString *created_at = [temp objectForKey:@"date"];
+        NSTimeInterval equalizedTimeInterval = [self returnTumblrTimeInterval:created_at];
+        [temp setObject:[NSNumber numberWithLong:(long)equalizedTimeInterval] forKey:@"eti"];
+        
         [singleton_universal.universal_feed_array addObject:temp];
     }
     
@@ -1451,7 +1563,7 @@
     }
     NSString *myHTML = caption;
     UIFont *font = [UIFont fontWithName:@"Helvetica-Light" size:14];
-    NSString *htmlString = [NSString stringWithFormat:@"<html><body><div id='main'><style>  a:link { color:#000; text-decoration:underline; } img{width:300px; }</style> <span style=\"font-family: %@; font-size: %i;\">%@</span>",
+    NSString *htmlString = [NSString stringWithFormat:@"<html><body><div id='main'><style>  a:link { color:#000; text-decoration:underline; } img{width:300px; padding-top:15px; }</style> <span style=\"font-family: %@; font-size: %i;\">%@</span>",
                   font.fontName,
                   (int) font.pointSize,
                   caption];
@@ -1459,7 +1571,7 @@
     
 //    htmlString = [htmlString stringByReplacingOccurrencesOfString:@"string" withString:@"duck"];
     UIWebView *webView = [[UIWebView alloc] initWithFrame:CGRectMake(0, 0, screenWidth, 100)];
-    webView.userInteractionEnabled = YES;
+//    webView.userInteractionEnabled = YES;
     webView.delegate = self;
 //    [webView loadHTMLString:htmlString baseURL:nil];
     //load file into webView
@@ -1483,6 +1595,7 @@
 //    int height = webView.scrollView.contentSize.height;
     webView.frame = CGRectMake(0, 0, screenWidth, height);
     webView.delegate = self;
+    webView.userInteractionEnabled = NO;
     [webView.scrollView setBounces:NO];
 //    webView.clipsToBounds = YES;
     
@@ -1549,6 +1662,10 @@
     UITapGestureRecognizer *tumblrReblog = [[UITapGestureRecognizer alloc] initWithTarget:self  action:@selector(loadTumblrCompose:)];
     cell.reblog_view.userInteractionEnabled = YES;
     [cell.reblog_view addGestureRecognizer:tumblrReblog];
+    
+    UITapGestureRecognizer *tumblrLike = [[UITapGestureRecognizer alloc] initWithTarget:self  action:@selector(likeTumblr:)];
+    cell.heart_view.userInteractionEnabled = YES;
+    [cell.heart_view addGestureRecognizer:tumblrReblog];
     
     UITapGestureRecognizer *tumblrShare = [[UITapGestureRecognizer alloc] initWithTarget:self  action:@selector(shareTumblr:)];
     cell.share_view.userInteractionEnabled = YES;
@@ -2081,80 +2198,74 @@
 +(void)sortUniversalFeedByTime:(DataClass *)singleton_universal{
     
     NSMutableArray *temp = [[NSMutableArray alloc] initWithArray:singleton_universal.universal_feed_array];
-    NSMutableArray *insert = [[NSMutableArray alloc] init];
     
-    for(NSDictionary *dict in singleton_universal.universal_feed_array){
-        NSString *type = [dict objectForKey:@"type"];
-        if([type isEqualToString:@"instagram"]){
-            
-            NSString *created_at = [dict objectForKey:@"created_at"];
-            NSTimeInterval distanceBetweenDates = [self returnInstagramTimeInterval:created_at];
-            //int index = [self findNextInputSpot:distanceBetweenDates array:insert];
-            
-            int rand = (arc4random_uniform([insert count]));
-            
-            [insert insertObject:dict atIndex:rand];
-            //NSLog(@"%d", index);
-        }else if([type isEqualToString:@"twitter"]){
-            NSString *created_at = [dict objectForKey:@"created_time"];
-            NSTimeInterval distanceBetweenDates = [self returnTwitterTimeInterval:created_at];
-            //int index = [self findNextInputSpot:distanceBetweenDates array:insert];
-            int rand = (arc4random_uniform([insert count]));
-            [insert insertObject:dict atIndex:rand];
-        }else if([type isEqualToString:@"tumblr"]){
-            NSString *created_at = [dict objectForKey:@"date"];
-            NSTimeInterval distanceBetweenDates = [self returnTumblrTimeInterval:created_at];
-            //int index = [self findNextInputSpot:distanceBetweenDates array:insert];
-            int rand = (arc4random_uniform([insert count]));
-            [insert insertObject:dict atIndex:rand];
-        }else{
-            NSLog(@"facebook");
-            NSString *created_at = [dict objectForKey:@"created_time"];
-            NSTimeInterval distanceBetweenDates = [self returnTwitterTimeInterval:created_at];
-            //int index = [self findNextInputSpot:distanceBetweenDates array:insert];
-             int rand = (arc4random_uniform([insert count]));
-            [insert insertObject:dict atIndex:rand];
-        }
-    }
+    NSSortDescriptor *hopProfileDescriptor =  [[NSSortDescriptor alloc] initWithKey:@"eti" ascending:YES];
+    NSArray *descriptors = [NSArray arrayWithObjects:hopProfileDescriptor, nil];
+    NSArray *sortedArrayOfDictionaries = [temp sortedArrayUsingDescriptors:descriptors];
+    singleton_universal.universal_feed_array = [NSMutableArray arrayWithArray:sortedArrayOfDictionaries];
     
-   // NSLog(@"%@", date_dic);
-    
-    
-    NSArray* reversedArray = [[temp reverseObjectEnumerator] allObjects];
-    singleton_universal.universal_feed_array = [NSMutableArray arrayWithArray:insert];
+    FeedMainViewController *t = (FeedMainViewController *)singleton_universal.mainViewController;
+    [t update];
     
 }
++(int)returnIndex:(NSMutableArray *)insert eTI:(NSTimeInterval)equalizedTimeInterval curIn:(int)index{
+    int inserted = 0;
+    for(int i = 0; i < [insert count]; i++){
+        NSDictionary *new_dict = [insert objectAtIndex:i];
+        NSString *new_type = [new_dict objectForKey:@"type"];
+        
+        if([new_type isEqualToString:@"instagram"]){
+            NSString *new_created_at = [new_dict objectForKey:@"created_time"];
+            NSTimeInterval new_equalizedTimeInterval = [self returnInstagramTimeInterval:new_created_at];
+            NSInteger ti = (NSInteger)new_equalizedTimeInterval;
+            NSInteger seconds = ti;
+            //                        NSLog([NSString stringWithFormat:@"%02ld",(long)seconds]);
+            if(inserted == 0){
+                if((long)equalizedTimeInterval < (long)new_equalizedTimeInterval ){
+//                    NSLog([NSString stringWithFormat:@"%02ld %02ld",(long)equalizedTimeInterval, (long)new_equalizedTimeInterval]);
+                    return i;
+                }
+            }
+            
+        }else if([new_type isEqualToString:@"twitter"]){
+            
+            NSString *new_created_at = [new_dict objectForKey:@"created_at"];
+            NSTimeInterval new_equalizedTimeInterval = [self returnTwitterTimeInterval:new_created_at];
+            
+                if((long)equalizedTimeInterval < (long)new_equalizedTimeInterval ){
+                    NSLog(@"%d", i);
+                    return i;
+            }
+            
+        }else if([new_type isEqualToString:@"tumblr"]){
+            NSString *new_created_at = [new_dict objectForKey:@"date"];
+            NSTimeInterval new_equalizedTimeInterval = [self returnTumblrTimeInterval:new_created_at];
+            if(inserted == 0){
+                if((long)equalizedTimeInterval < (long)new_equalizedTimeInterval ){
+//                    NSLog([NSString stringWithFormat:@"orig %02ld tumb %02ld",(long)equalizedTimeInterval, (long)new_equalizedTimeInterval]);
+                    return i;
+                }
+            }
+        }else{
+            
+        }
+//        index++;
+        
+    }
+    return [insert count];
+}
+
 +(int) findNextInputSpot:(NSTimeInterval)interval array:(NSMutableArray *)inserted{
     int index = 0;
     int count = 0;
     for(NSMutableDictionary *dict in inserted){
-        //NSLog(@"count = %d", count);
-        //NSLog(@"%d", index);
         NSString *type = [dict objectForKey:@"type"];
         if([type isEqualToString:@"instagram"]){
-            NSString *created_at = [dict objectForKey:@"created_time"];
-            NSTimeInterval distanceBetweenDates = [self returnInstagramTimeInterval:created_at];
             
-            if((NSInteger)interval < (NSInteger)distanceBetweenDates){
-                //NSLog(@"Interval %@ > distance %@", interval, distanceBetweenDates);
-                return index;
-            }
         }if([type isEqualToString:@"twitter"]){
-            NSString *created_at = [dict objectForKey:@"created_at"];
-            NSTimeInterval distanceBetweenDates = [self returnTwitterTimeInterval:created_at];
             
-            if((NSInteger)interval < (NSInteger)distanceBetweenDates){
-                //NSLog(@"Interval %@ > distance %@", interval, distanceBetweenDates);
-                return index;
-            }
         }else{
-            NSString *created_at = [dict objectForKey:@"date"];
-            NSTimeInterval distanceBetweenDates = [self returnTumblrTimeInterval:created_at];
             
-            if((NSInteger)interval < (NSInteger)distanceBetweenDates){
-                //NSLog(@"Interval %@ > distance %@", interval, distanceBetweenDates);
-                return index;
-            }
         }
         count++;
         index++;
@@ -2178,7 +2289,7 @@
     NSString *name = test.username.text;
     DataClass *singleton_universal = [DataClass getInstance];
     
-    ProfileView *profile = [[ProfileView alloc] initWithProfile:name type:@"instagram"];
+    ProfileView *profile = [[ProfileView alloc] initForInstagram:name user_id:test.user_id type:@"instagram"];
     [singleton_universal.mainNavController pushViewController:profile animated:YES];
     
 }
@@ -2207,7 +2318,7 @@
     test.reply_image.frame = CGRectMake(70, 6.0f, 17, 17);
     [UIView commitAnimations];
     
-    TwitterComposeScreenViewController *compose = [[TwitterComposeScreenViewController alloc] init];
+    TwitterComposeScreenViewController *compose = [[TwitterComposeScreenViewController alloc] initWithName:test.username.text stats:test.original_twitter_media_id];
     [singleton_universal.mainNavController presentViewController:compose animated:YES completion:^{
         
     }];
@@ -2245,7 +2356,7 @@
     NSString *name = test.username.text;
     DataClass *singleton_universal = [DataClass getInstance];
    
-    ProfileView *profile = [[ProfileView alloc] initWithProfile:name type:@"instagram"];
+    ProfileView *profile = [[ProfileView alloc] initForInstagram:name user_id:test.user_id type:@"instagram"];
     [singleton_universal.mainNavController pushViewController:profile animated:YES];
     
 }
@@ -2276,7 +2387,7 @@
 }
 + (void)textTapped:(UITapGestureRecognizer *)recognizer
 {
-    
+    NSLog(@"tapped");
 //    TwitterCell *test =[((TwitterCell *) recognizer.view) superview];
     
     DataClass *singleton_universal = [DataClass getInstance];
@@ -2363,6 +2474,101 @@
             
             ProfileView *profile = [[ProfileView alloc] initWithProfile:needle type:@"twitter"];
             [singleton_universal.mainNavController pushViewController:profile animated:YES];
+        }
+        //
+    }
+}
++ (void)textTappedInsta:(UITapGestureRecognizer *)recognizer
+{
+    NSLog(@"tapped insta");
+    //    TwitterCell *test =[((TwitterCell *) recognizer.view) superview];
+    
+    DataClass *singleton_universal = [DataClass getInstance];
+    UITextView *textView = (UITextView *)recognizer.view;
+    
+    // Location of the tap in text-container coordinates
+    
+    NSLayoutManager *layoutManager = textView.layoutManager;
+    CGPoint location = [recognizer locationInView:textView];
+    location.x -= textView.textContainerInset.left;
+    location.y -= textView.textContainerInset.top;
+    
+    // Find the character that's been tapped on
+    
+    NSUInteger characterIndex;
+    characterIndex = [layoutManager characterIndexForPoint:location
+                                           inTextContainer:textView.textContainer
+                  fractionOfDistanceBetweenInsertionPoints:NULL];
+    
+    if (characterIndex < textView.textStorage.length) {
+        
+        NSRange range;
+        
+        id value = [textView.attributedText attribute:@"NSLinkAttributeName" atIndex:characterIndex effectiveRange:&range];
+        NSRange needleRange = NSMakeRange(range.location,
+                                          range.length);
+        NSString *needle = [textView.attributedText.string substringWithRange:needleRange];
+        
+        CGRect screenRect = [[UIScreen mainScreen] bounds];
+        CGFloat screenWidth = screenRect.size.width;
+        CGFloat screenHeight = screenRect.size.height;
+        
+        
+        if ( [needle rangeOfString:@"http://" options:NSCaseInsensitiveSearch].location != NSNotFound ) {
+            singleton_universal.urlWrapper = [[UIView alloc] initWithFrame:CGRectMake(0, screenHeight , screenWidth, screenHeight)];
+            [singleton_universal.mainViewController.view addSubview:singleton_universal.urlWrapper];
+            
+            singleton_universal.closeView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, screenWidth, 40)];
+            [singleton_universal.closeView setBackgroundColor:[UIColor whiteColor]];
+            
+            UITapGestureRecognizer *tgr = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(closeURLView:)];
+            [singleton_universal.closeView addGestureRecognizer:tgr];
+            
+            UILabel *closeLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, screenWidth-10, 40)];
+            closeLabel.text = @"X";
+            closeLabel.textAlignment = NSTextAlignmentRight;
+            closeLabel.font = [UIFont fontWithName:@"HelveticaNeue-UltraLight" size:40];
+            [singleton_universal.closeView addSubview:closeLabel];
+            
+            singleton_universal.t = [[UIWebView alloc] initWithFrame:CGRectMake(0, 40, screenWidth, screenHeight-0)];
+            singleton_universal.t.delegate = singleton_universal.mainViewController;
+            singleton_universal.t.scalesPageToFit=YES;
+            singleton_universal.t.scrollView.delegate = singleton_universal.mainViewController;
+            NSURL *url = [NSURL URLWithString:needle];
+            NSURLRequest* request = [NSURLRequest requestWithURL:url];
+            [singleton_universal.t loadRequest:request];
+            [singleton_universal.urlWrapper addSubview:singleton_universal.t];
+            [singleton_universal.urlWrapper addSubview:singleton_universal.closeView];
+            
+            [UIView animateWithDuration:0.5
+                                  delay:0.0
+                                options: UIViewAnimationCurveEaseOut
+                             animations:^{
+                                 CGRect new_frame = singleton_universal.urlWrapper.frame;
+                                 new_frame.origin.y = 0;
+                                 singleton_universal.urlWrapper.frame = new_frame;
+                                 
+                                 [singleton_universal.mainNavController setNavigationBarHidden:YES];
+                             }
+                             completion:^(BOOL finished){
+                                 //                             NSLog(@"Done!");
+                             }];
+            
+            
+        }else{
+            //            NSLog(@"not");
+        }
+        if ( [needle rangeOfString:@"#" options:NSCaseInsensitiveSearch].location != NSNotFound ) {
+            
+            HashtagSearch *hashtag = [[HashtagSearch alloc] initWithSearch:needle];
+            [singleton_universal.mainNavController pushViewController:hashtag animated:YES];
+        }
+        if ( [needle rangeOfString:@"@" options:NSCaseInsensitiveSearch].location != NSNotFound ) {
+            InstagramCell *test =[[((InstagramCell *) recognizer.view) superview] superview];
+//            NSString *name = test.username.text;
+            
+            ProfileView *profile = [[ProfileView alloc] initForInstagram:needle user_id:test.user_id type:@"instagram"];
+                        [singleton_universal.mainNavController pushViewController:profile animated:YES];
         }
         //
     }
@@ -2467,32 +2673,56 @@
                      }];
 }
 +(NSTimeInterval) returnInstagramTimeInterval:(NSString *)response{
+//    NSLog(response);
+    NSTimeInterval epoch = [response doubleValue];
+    NSDate * date = [NSDate dateWithTimeIntervalSince1970:epoch];
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    [dateFormatter setDateFormat:@"yyyy-MM-dd HH:mm:ss zzz"];
+    NSString *dateString = [dateFormatter stringFromDate:date];
     NSDate *now = [NSDate date];
+    NSTimeInterval distanceBetweenDates = [now timeIntervalSinceDate:date];
+    
+    
+//    NSLog(@"heere %@",[dateFormatter stringFromDate:tweetCreatedDate]);
+    
+    
+//    NSLog(dateString);
+    
+    NSInteger ti = (NSInteger)distanceBetweenDates;
+    NSInteger seconds = ti;
+//    NSLog([NSString stringWithFormat:@"%02ld",(long)seconds]);
+//    NSLog(@"insta distance %ld", (long)distanceBetweenDates);
+    return distanceBetweenDates;
+}
++(NSTimeInterval) returnTwitterTimeInterval:(NSString *)response{
+//    NSLog(response);
+
+    NSDate *now = [NSDate date];
+    
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
     [dateFormatter setDateFormat:@"eee MMM dd HH:mm:ss ZZZZ yyyy"];
     NSDate *tweetCreatedDate = [dateFormatter dateFromString:response];
     NSTimeInterval distanceBetweenDates = [now timeIntervalSinceDate:tweetCreatedDate];
-    //NSLog(@"%ld", (long)distanceBetweenDates);
-    return distanceBetweenDates;
-}
-+(NSTimeInterval) returnTwitterTimeInterval:(NSString *)response{
-    NSTimeInterval epoch = [response doubleValue];
-    NSDate * date = [NSDate dateWithTimeIntervalSince1970:epoch];
-    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    [dateFormatter setDateFormat:@"yyyy-MM-dd HH:mm:ss zzz"];
-    NSString *dateString = [dateFormatter stringFromDate:date];
-    NSDate *now = [NSDate date];
-    NSTimeInterval distanceBetweenDates = [now timeIntervalSinceDate:date];
+    
+//    NSLog([dateFormatter stringFromDate:tweetCreatedDate]);
+    
+    NSInteger ti = (NSInteger)distanceBetweenDates;
+    NSInteger seconds = ti;
+//    NSLog([NSString stringWithFormat:@"%02ld",(long)seconds]);
+//    NSLog(@"twitter distance %ld", (long)distanceBetweenDates);
     return distanceBetweenDates;
 }
 +(NSTimeInterval) returnTumblrTimeInterval:(NSString *)response{
     NSTimeInterval epoch = [response doubleValue];
+    NSDate *now = [NSDate date];
+    
     NSDate * date = [NSDate dateWithTimeIntervalSince1970:epoch];
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
     [dateFormatter setDateFormat:@"yyyy-MM-dd HH:mm:ss zzz"];
-    NSString *dateString = [dateFormatter stringFromDate:date];
-    NSDate *now = [NSDate date];
-    NSTimeInterval distanceBetweenDates = [now timeIntervalSinceDate:date];
+    NSDate *tumbCreatedDate = [dateFormatter dateFromString:response];
+    NSTimeInterval distanceBetweenDates = [now timeIntervalSinceDate:tumbCreatedDate];
+    
+    
     return distanceBetweenDates;
 }
 @end

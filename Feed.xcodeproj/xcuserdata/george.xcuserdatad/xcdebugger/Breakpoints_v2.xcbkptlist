@@ -42,85 +42,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Feed/CreationFunctions.m"
-            timestampString = "425347023.953142"
+            timestampString = "428148070.989236"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "823"
-            endingLineNumber = "823"
-            landmarkName = "+fetchTwitterFeed:"
-            landmarkType = "5">
-            <Locations>
-               <Location
-                  shouldBeEnabled = "No"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "__38+[CreationFunctions fetchTwitterFeed:]_block_invoke"
-                  moduleName = "Feed"
-                  urlString = "file:///Users/george/Documents/xCode/Workspace/Feed/Feed/CreationFunctions.m"
-                  timestampString = "416773855.004845"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "462"
-                  endingLineNumber = "462"
-                  offsetFromSymbolStart = "206">
-               </Location>
-               <Location
-                  shouldBeEnabled = "No"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "__copy_helper_block_254"
-                  moduleName = "Feed"
-                  urlString = "file:///Users/george/Documents/xCode/Workspace/Feed/Feed/CreationFunctions.m"
-                  timestampString = "416773855.005073"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "462"
-                  endingLineNumber = "462"
-                  offsetFromSymbolStart = "16">
-               </Location>
-               <Location
-                  shouldBeEnabled = "No"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "__destroy_helper_block_255"
-                  moduleName = "Feed"
-                  urlString = "file:///Users/george/Documents/xCode/Workspace/Feed/Feed/CreationFunctions.m"
-                  timestampString = "416773855.005234"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "462"
-                  endingLineNumber = "462"
-                  offsetFromSymbolStart = "14">
-               </Location>
-               <Location
-                  shouldBeEnabled = "No"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "__38+[CreationFunctions fetchTwitterFeed:]_block_invoke258"
-                  moduleName = "Feed"
-                  urlString = "file:///Users/george/Documents/xCode/Workspace/Feed/Feed/CreationFunctions.m"
-                  timestampString = "416773855.005398"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "462"
-                  endingLineNumber = "462"
-                  offsetFromSymbolStart = "34">
-               </Location>
-            </Locations>
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "Feed/CreationFunctions.m"
-            timestampString = "425347023.953142"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "818"
-            endingLineNumber = "818"
+            startingLineNumber = "907"
+            endingLineNumber = "907"
             landmarkName = "+fetchTwitterFeed:"
             landmarkType = "5">
          </BreakpointContent>
@@ -132,11 +58,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Feed/CreationFunctions.m"
-            timestampString = "425347023.953142"
+            timestampString = "428148070.989236"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "902"
-            endingLineNumber = "902"
+            startingLineNumber = "1015"
+            endingLineNumber = "1015"
             landmarkName = "+createTwitterCell:cellForRowAtIndexPath:singleton:"
             landmarkType = "5">
          </BreakpointContent>
@@ -148,11 +74,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Feed/FeedMainViewController.m"
-            timestampString = "424908063.228315"
+            timestampString = "428103725.16507"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "618"
-            endingLineNumber = "618"
+            startingLineNumber = "699"
+            endingLineNumber = "699"
             landmarkName = "-tableView:cellForRowAtIndexPath:"
             landmarkType = "5">
          </BreakpointContent>
@@ -164,11 +90,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Feed/CreationFunctions.m"
-            timestampString = "425347023.953142"
+            timestampString = "428148070.989236"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "483"
-            endingLineNumber = "483"
+            startingLineNumber = "548"
+            endingLineNumber = "548"
             landmarkName = "+returnCommentsHeight:textString:"
             landmarkType = "5">
          </BreakpointContent>
@@ -180,11 +106,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Feed/CreationFunctions.m"
-            timestampString = "424895220.832273"
+            timestampString = "426703310.81149"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "289"
-            endingLineNumber = "289"
+            startingLineNumber = "292"
+            endingLineNumber = "292"
             landmarkName = "+createInstagramCell:cellForRowAtIndexPath:singleton:"
             landmarkType = "5">
          </BreakpointContent>
@@ -196,11 +122,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Feed/FeedMainViewController.m"
-            timestampString = "424908063.228315"
+            timestampString = "428103725.16507"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "704"
-            endingLineNumber = "704"
+            startingLineNumber = "785"
+            endingLineNumber = "785"
             landmarkName = "-tableView:heightForRowAtIndexPath:"
             landmarkType = "5">
          </BreakpointContent>
@@ -212,27 +138,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Feed/CreationFunctions.m"
-            timestampString = "425348374.55313"
+            timestampString = "428148070.989236"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "2119"
-            endingLineNumber = "2119"
-            landmarkName = "+sortUniversalFeedByTime:"
-            landmarkType = "5">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "Feed/CreationFunctions.m"
-            timestampString = "425347023.953142"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "718"
-            endingLineNumber = "718"
+            startingLineNumber = "807"
+            endingLineNumber = "807"
             landmarkName = "+fetchFacebookFeed:"
             landmarkType = "5">
          </BreakpointContent>
@@ -244,11 +154,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Feed/CreationFunctions.m"
-            timestampString = "425347023.953142"
+            timestampString = "428148070.989236"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "865"
-            endingLineNumber = "865"
+            startingLineNumber = "973"
+            endingLineNumber = "973"
             landmarkName = "+addFacebookToFeed:"
             landmarkType = "5">
          </BreakpointContent>
@@ -260,11 +170,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Feed/CreationFunctions.m"
-            timestampString = "425348374.55313"
+            timestampString = "428148070.989236"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1753"
-            endingLineNumber = "1753"
+            startingLineNumber = "1867"
+            endingLineNumber = "1867"
             landmarkName = "+createFacebookCell:cellForRowAtIndexPath:singleton:"
             landmarkType = "5">
          </BreakpointContent>
@@ -276,11 +186,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Feed/CreationFunctions.m"
-            timestampString = "425348374.55313"
+            timestampString = "428148070.989236"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1860"
-            endingLineNumber = "1860"
+            startingLineNumber = "1974"
+            endingLineNumber = "1974"
             landmarkName = "+createFacebookCell:cellForRowAtIndexPath:singleton:"
             landmarkType = "5">
          </BreakpointContent>

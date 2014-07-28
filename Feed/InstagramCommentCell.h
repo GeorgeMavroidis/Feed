@@ -15,6 +15,7 @@
 @property (nonatomic, strong) UIImageView *clock_view;
 @property (nonatomic, strong) UILabel *time;
 @property (nonatomic, strong) UITextView *text;
+@property (nonatomic, strong) NSString *user_id;
 
 
 @end

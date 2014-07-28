@@ -18,4 +18,6 @@
 +(void)addTumblrFeed:(ProfileDataClass *)singleton_universal;
 
 +(void)sortUniversalFeedByTime:(ProfileDataClass *)singleton_universal;
+
++(void)fetchInstagramFeedForSelf:(ProfileDataClass *)singleton_universal;
 @end

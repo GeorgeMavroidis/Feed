@@ -10,7 +10,7 @@
 #import "InstagramCommentCell.h"
 
 @implementation InstagramCommentCell
-@synthesize username, profile_picture_image_view, clock_view, time, text;
+@synthesize username, profile_picture_image_view, clock_view, time, text, user_id;
 
 - (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
 {
@@ -22,7 +22,7 @@
         [self setBackgroundColor:[UIColor clearColor]];
         username = [[UILabel alloc] initWithFrame:CGRectMake(50, 10, screenWidth, 20)];
         [self addSubview:username];
-        
+        user_id = @"";
         profile_picture_image_view = [[UIImageView alloc] initWithFrame:CGRectMake(5, 10, 32, 32)];
         CALayer *imageLayer = profile_picture_image_view.layer;
         [imageLayer setCornerRadius:32/2];

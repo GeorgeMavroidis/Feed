@@ -11,10 +11,12 @@
 #import "AsyncImageView.h"
 #import "UIImageView+WebCache.h"
 
+
 @interface TwitterComposeScreenViewController (){
     ALAssetsLibrary *library;
     NSArray *imageArray;
     NSMutableArray *assets, *pictures;
+    NSString *replT, *statID;
 }
 
 @end
@@ -121,11 +123,23 @@ static int count=0;
     
     
 }
+-(id)initWithName:(NSString *)replyTo stats:(NSString *)state{
+    self = [super init];
+    if (self) {
+        replT = replyTo;
+        statID = state;
+        
+        NSLog(replT);
+    }
+    return self;
+}
 - (void)viewDidLoad
 {
     [super viewDidLoad];
     [self.view setBackgroundColor:[UIColor whiteColor]];
     [self.navigationController setNavigationBarHidden:YES];
+    
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     
     
     CGRect screenRect = [[UIScreen mainScreen] bounds];
@@ -177,14 +191,21 @@ static int count=0;
     inputText.font = [UIFont fontWithName:@"Helvetica" size:15.0f];
     inputText.delegate = self;
     inputText.keyboardType = UIKeyboardTypeTwitter;
+    NSString* firstName = [[replT componentsSeparatedByString:@" "] lastObject];
+    inputText.text = [NSString stringWithFormat:@"%@ ", firstName];
     [middle_section addSubview:inputText];
     
     profileImage = [[UIImageView alloc] initWithFrame:CGRectMake(10, 10, 30, 30)];
     [profileImage setBackgroundColor:[UIColor whiteColor]];
-    [middle_section addSubview:profileImage];
-    CALayer *imageLayer = profileImage.layer;
-    [imageLayer setCornerRadius:4];
-    [imageLayer setMasksToBounds:YES];
+    NSString *documentsDirectory = [NSHomeDirectory()
+                                    stringByAppendingPathComponent:@"Documents"];
+    NSString *storePath = [documentsDirectory stringByAppendingPathComponent:@"twitter_auth"];
+    NSMutableArray *twitter_auth = [NSMutableArray arrayWithContentsOfFile:storePath];
+    //oAuthToken, oAuthTokenSecret, @"4tIoaRQHod1IQ00wtSmRw", @"S6GATtE4xirn5WlfW79d6aSH4ciMD196hPQuL2g52M8",
+    NSString *oauthToken = [twitter_auth objectAtIndex:0];
+    NSString *oauthTokenSecret = [twitter_auth objectAtIndex:1];
+    NSString *consumerToken = [twitter_auth objectAtIndex:2];
+    NSString *consumerTokenSecret = [twitter_auth objectAtIndex:3];
     
     screen_name = [[UILabel alloc] initWithFrame:CGRectMake(50, profileImage.frame.origin.y, screenWidth, 15)];
     [screen_name setBackgroundColor:[UIColor clearColor]];
@@ -197,6 +218,34 @@ static int count=0;
     [username setBackgroundColor:[UIColor clearColor]];
     
     [middle_section addSubview:username];
+    
+    STTwitterAPI *twitter = [STTwitterAPI twitterAPIWithOAuthConsumerKey:consumerToken consumerSecret:consumerTokenSecret oauthToken:oauthToken oauthTokenSecret:oauthTokenSecret];
+
+    [twitter verifyCredentialsWithSuccessBlock:^(NSString *usernam) {
+        [twitter getUserInformationFor:usernam successBlock:^(NSDictionary *user) {
+//            NSLog(@"%@", user);
+            NSString *thing = [user objectForKey:@"profile_image_url"];
+            [thing stringByReplacingOccurrencesOfString:@"_normal" withString:@""];
+            profileImage.imageURL = [NSURL URLWithString:thing];
+            username.text = usernam;
+            screen_name.text = [user objectForKey:@"name"];
+        } errorBlock:^(NSError *error) {
+            
+        }];
+        
+    } errorBlock:^(NSError *error) {
+        NSLog(@"ee %@", [error localizedDescription]);
+    }];
+    
+    
+    
+
+    [middle_section addSubview:profileImage];
+    CALayer *imageLayer = profileImage.layer;
+    [imageLayer setCornerRadius:4];
+    [imageLayer setMasksToBounds:YES];
+    
+   
     
     interactions = [[UIView alloc] initWithFrame:CGRectMake(0, middle_section.frame.size.height+middle_section.frame.origin.y, screenWidth, 40)];
     [interactions setBackgroundColor:[UIColor whiteColor]];
@@ -241,7 +290,7 @@ static int count=0;
     [inputText becomeFirstResponder];
     
     placeholderLabel = [[UILabel alloc] initWithFrame:CGRectMake(5.0, 0.0, inputText.frame.size.width - 20.0, 34.0)];
-    [placeholderLabel setText:@"What's happening?"];
+//    [placeholderLabel setText:@"What's happening?"];
     [placeholderLabel setBackgroundColor:[UIColor clearColor]];
     [placeholderLabel setFont:[inputText font]];
     [placeholderLabel setTextColor:[UIColor lightGrayColor]];
@@ -393,16 +442,16 @@ static int count=0;
         NSString *consumerTokenSecret = [twitter_auth objectAtIndex:3];
         
         STTwitterAPI *twitter = [STTwitterAPI twitterAPIWithOAuthConsumerKey:consumerToken consumerSecret:consumerTokenSecret oauthToken:oauthToken oauthTokenSecret:oauthTokenSecret];
-        
+
         [twitter postStatusUpdate:inputText.text
-                inReplyToStatusID:nil
+                inReplyToStatusID:statID
                          latitude:nil
                         longitude:nil
                           placeID:nil
                displayCoordinates:nil
                          trimUser:nil
                      successBlock:^(NSDictionary *status) {
-                         [self.navigationController popViewControllerAnimated:YES];
+                         [self cancel];
                      } errorBlock:^(NSError *error) {
                          // ...
                      }];

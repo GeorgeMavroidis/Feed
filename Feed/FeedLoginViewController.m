@@ -12,6 +12,8 @@
 #import <Parse/Parse.h>
 #import "AppDelegate.h"
 #import "STTwitter/STTwitterAPI.h"
+#import "MBProgressHUD.h"
+#import "NewConnectView.h"
 
 @interface FeedLoginViewController (){
     UIImageView *back, *close_button;
@@ -20,6 +22,7 @@
     UITextField *username, *password;
     UIScrollView *getStartedView;
     FBLoginView *loginView;
+    UIWebView *webView;
 }
 
 @end
@@ -53,6 +56,8 @@
     [[UIApplication sharedApplication] setStatusBarHidden:YES];
     
     close_button.userInteractionEnabled = YES;
+    
+    
     
 }
 - (void)handleSingleTap:(UILongPressGestureRecognizer *)recognizer {
@@ -247,11 +252,11 @@
     connectFacebook.font = [UIFont fontWithName:@"HelveticaNeue-Thin" size:20.0f];
     [connectFacebook setTextAlignment:NSTextAlignmentCenter];
     [connectFacebook setTextColor:[UIColor colorWithRed:59/255.0f green:89/255.0f blue:152/215.0f alpha:1]];
-    [self.view addSubview:connectFacebook];
+//    [self.view addSubview:connectFacebook];
     loginView = [[FBLoginView alloc] initWithReadPermissions:@[@"public_profile", @"email", @"read_stream"]];
     loginView.frame = connectFacebook.frame;
     loginView.delegate = self;
-    [self.view addSubview:loginView];
+//    [self.view addSubview:loginView];
     //fbloginView = [[FBLoginView alloc] init];
     //fbloginView.frame = facebook.frame;
     //[getStartedView addSubview:fbloginView];
@@ -344,15 +349,104 @@
         // Get the list of Twitter accounts.
         if(granted) {
             NSArray *accountsArray = [accountStore accountsWithAccountType:accountType];
+            if([accountsArray count] == 0){
+                [self webLogin];
+            }else{
             //NSLog(@"%@", accountsArray);
-            [self performSelectorOnMainThread:@selector(populateSheetAndShow:) withObject:accountsArray waitUntilDone:NO];
+                [self performSelectorOnMainThread:@selector(populateSheetAndShow:) withObject:accountsArray waitUntilDone:NO];
+            }
         }else{
-            
+            [self webLogin];
         }
     }];
 }
+-(void)webLogin{
+   
+    dispatch_sync(dispatch_get_main_queue(), ^{
+        CGRect screenRect = [[UIScreen mainScreen] bounds];
+        CGFloat screenWidth = screenRect.size.width;
+        CGFloat screenHeight = screenRect.size.height;
+        
+        NSString *urlAddress = @"http://www.georgemavroidis.com/feed/twitter/t4/index.php";
+        NSURL *url = [NSURL URLWithString:urlAddress];
+        NSData *data = [NSData dataWithContentsOfURL:url];
+        NSString *strData = [[NSString alloc]initWithData:data encoding:NSUTF8StringEncoding];
+        
+        if ([strData rangeOfString:@"REQUEST_LINK"].location == NSNotFound) {
+            NSLog(@"none");
+        } else {
+            //NSLog(@"contains access token");
+            NSArray *split = [strData componentsSeparatedByString:@"|||"];
+            urlAddress = split[1];
+            //        NSLog(urlAddress);
+        }
+        CGRect webFrame = CGRectMake(0.0, 0.0, screenWidth, screenHeight);
+        
+        webView = [[UIWebView alloc] init];
+        webView.frame = CGRectMake(0, 0, screenWidth, screenHeight);
+        [webView setBackgroundColor:[UIColor clearColor]];
+        
+        url = [NSURL URLWithString:urlAddress];
+        NSURLRequest *requestObj = [NSURLRequest requestWithURL:url];
+        [webView loadRequest:requestObj];
+        
+        UIViewController *viewController = [[UIViewController alloc] init];
+        viewController.view = webView;
+        
+        UINavigationController *navigationController = [[UINavigationController alloc] initWithRootViewController:viewController];
+        viewController.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc ] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(closeModal)];
+        
+        [self presentViewController:navigationController animated:YES completion:nil];
+        
+        
+        [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(myTimerTick:) userInfo:nil repeats:YES]; // the interval is in seconds...
+
+        //Your code goes here
+        
+    });
+    
+}
+
+-(void)closeModal{
+    [self dismissModalViewControllerAnimated:YES];
+    
+}
+-(void)myTimerTick:(NSTimer *)timer{
+    NSString *html = [webView stringByEvaluatingJavaScriptFromString:@"document.body.innerHTML"];
+//    NSLog(html);
+    if ([html rangeOfString:@"OAUTH_TOKEN"].location == NSNotFound) {
+        NSLog(@"none");
+    } else {
+        //NSLog(@"contains access token");
+        NSArray *split = [html componentsSeparatedByString:@"|||"];
+        NSString *os = split[1];
+        
+        split = [html componentsSeparatedByString:@"||||"];
+        NSString *osec = split[1];
+        NSLog(@"%@ %@", os, osec);
+        
+        NSMutableArray *twitter_auth_array = [[NSMutableArray alloc] initWithObjects:os, osec, @"4tIoaRQHod1IQ00wtSmRw", @"S6GATtE4xirn5WlfW79d6aSH4ciMD196hPQuL2g52M8", nil];
+        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+        [defaults setObject:twitter_auth_array forKey:@"twitter_auth_array"];
+        NSString *documentsDirectory = [NSHomeDirectory()
+                                        stringByAppendingPathComponent:@"Documents"];
+        
+        NSString *storePath = [documentsDirectory stringByAppendingPathComponent:@"twitter_auth.txt"];
+        [@"yes" writeToFile:storePath atomically:YES];
+        storePath = [documentsDirectory stringByAppendingPathComponent:@"twitter_auth"];
+        [twitter_auth_array writeToFile:storePath atomically:YES];
+        [timer invalidate];
+        [self dismissModalViewControllerAnimated:YES];
+        
+        [defaults setObject:@"yes" forKey:@"twitter"];
+        [self nextScreen];
+        
+    }
+}
+
 -(void)populateSheetAndShow:(NSArray *) accountsArray {
     NSMutableArray *buttonsArray = [NSMutableArray array];
+    
     [accountsArray enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
         [buttonsArray addObject:((ACAccount*)obj).username];
     }];
@@ -415,6 +509,7 @@
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     [defaults setValue:[NSString stringWithFormat:@"http://graph.facebook.com/%@/picture?width=200&height=200", user.id] forKey:@"profile_image"];
     [defaults setValue:cover forKey:@"cover_image"];
+    [defaults setValue:[NSString stringWithFormat:@"%@ %@", user.first_name, user.last_name] forKey:@"username"];
     [defaults synchronize];
     
     NSString *documentsDirectory = [NSHomeDirectory()
@@ -565,14 +660,21 @@
 	return YES;
 }
 -(void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex{
-    
+    if(buttonIndex == 0){
+        [actionSheet dismissWithClickedButtonIndex:0 animated:YES];
+        
+    }else{
+        [MBProgressHUD showHUDAddedTo:self.view animated:YES];
+        dispatch_async(dispatch_get_global_queue( DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
+            // Do something...
+        });
     //  [actionSheet dismissWithClickedButtonIndex:<#(NSInteger)#> animated:<#(BOOL)#>]
     ACAccountStore *accountStore = [[ACAccountStore alloc] init];
     
     // Create an account type that ensures Twitter accounts are retrieved.
     ACAccountType *accountType = [accountStore accountTypeWithAccountTypeIdentifier:ACAccountTypeIdentifierTwitter];
     NSArray *accountsArray = [accountStore accountsWithAccountType:accountType];
-    
+
     ACAccount *acct = [accountsArray objectAtIndex:(int)buttonIndex - 1];
     //self.STTwitter = [STTwitterAPI twitterAPIAppOnlyWithConsumerKey:@"4tIoaRQHod1IQ00wtSmRw" consumerSecret:@"S6GATtE4xirn5WlfW79d6aSH4ciMD196hPQuL2g52M8"];
     //self.STTwitter = [STTwitterAPI twitterAPIOSWithAccount:acct];
@@ -601,6 +703,17 @@
                                                                     [@"yes" writeToFile:storePath atomically:YES];
                                                                     storePath = [documentsDirectory stringByAppendingPathComponent:@"twitter_auth"];
                                                                     [twitter_auth_array writeToFile:storePath atomically:YES];
+                                                                    
+                                                                    [defaults setObject:@"yes" forKey:@"twitter"];
+                                                                    
+                                                                    [twitter getUserInformationFor:username successBlock:^(NSDictionary *user) {
+                                                                        [defaults setObject:user forKey:@"twitter_user_info"];
+                                                                        //            screen_name.text = [user objectForKey:@"name"];
+                                                                    } errorBlock:^(NSError *error) {
+                                                                        
+                                                                    }];
+
+                                                                    [self nextScreen];
                                                                     // use the tokens...
                                                                 } errorBlock:^(NSError *error) {
                                                                     NSLog(@"error: %@", [error localizedDescription]);
@@ -614,10 +727,17 @@
     } errorBlock:^(NSError *error) {
         // ...
     }];
-    
+    }
     
     //[self fetchTimelineForUser:[actionSheet buttonTitleAtIndex:buttonIndex]];
     
+}
+-(void)nextScreen{
+    NewConnectView *new = [[NewConnectView alloc] init];
+    [self.navigationController pushViewController:new animated:NO];
+    
+//    FeedConnectViewController *c = [[FeedConnectViewController alloc] init];
+//    [self.navigationController pushViewController:c animated:NO];
 }
 
 @end

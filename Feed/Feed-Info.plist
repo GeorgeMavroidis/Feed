@@ -30,6 +30,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>fb467007690091467</string>
+                <string>Feed</string>
 			</array>
 		</dict>
 		<dict>

@@ -97,7 +97,7 @@
     [TMAPIClient sharedInstance].OAuthConsumerKey = @"gPPreRGZ96PskkcUk9J0fg70gCjWtI8AfO3aq20Ssenqzj5KIs";
     [TMAPIClient sharedInstance].OAuthConsumerSecret = @"zDyi5guipOImlfJEAd7Q4aTodo1z7Y3p66cXOvrA4xa6b9gSiI";
     
-//    [self nextScreen];
+    [self nextScreen];
 }
 -(void)setUserDefaults{
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
