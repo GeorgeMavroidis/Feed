@@ -46,6 +46,7 @@
         
         username = [[UITextView alloc] initWithFrame:CGRectMake(65, 0, screenWidth-95, 30)];
         username.userInteractionEnabled = NO;
+        username.editable = NO;
         username.font = [UIFont fontWithName:@"HelveticaNeue-Bold" size:12.5f];
         [self addSubview:username];
         

@@ -40,4 +40,5 @@
 
 -(id)initWithName:(NSString *)replyTo stats:(NSString *)state;
 
+-(id)initForQuote:(NSString *)quote;
 @end

@@ -7,8 +7,9 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "GAITrackedViewController.h"
 
-@interface FeedMainViewController : UIViewController <UITableViewDelegate, UITableViewDataSource, UIActionSheetDelegate, UITextViewDelegate, UIWebViewDelegate, UIScrollViewDelegate, UISearchBarDelegate>
+@interface FeedMainViewController : GAITrackedViewController <UITableViewDelegate, UITableViewDataSource, UIActionSheetDelegate, UITextViewDelegate, UIWebViewDelegate, UIScrollViewDelegate, UISearchBarDelegate>
 - (void)refreshTable;
 -(void)update;
 @property (nonatomic, strong) UITableView *main_tableView;

@@ -20,6 +20,7 @@
 #import "TumblrComposeViewController.h"
 #import "HashtagSearch.h"
 #import "FeedMainViewController.h"
+#import "ConnectionFunctions.h"
 
 @interface MediaInterface : NSObject
     @property (nonatomic, strong) UITapGestureRecognizer *gestureRec;
@@ -377,15 +378,15 @@
     //MediaInterface *media_int = [[MediaInterface alloc] init];
     //media_int.actual_media_id = get_media_id;
     //media_int.gestureRec = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(instagramDoubleTap:)];
-    UITapGestureRecognizer *tapTwice = [[UITapGestureRecognizer alloc] initWithTarget:self  action:@selector(instagramDoubleTap:)];
-    tapTwice.numberOfTapsRequired = 2;
-    cell.main_picture_view.userInteractionEnabled = YES;
-    [cell.main_picture_view addGestureRecognizer:tapTwice];
+//    UITapGestureRecognizer *tapTwice = [[UITapGestureRecognizer alloc] initWithTarget:self  action:@selector(instagramDoubleTap:)];
+//    tapTwice.numberOfTapsRequired = 2;
+//    cell.main_picture_view.userInteractionEnabled = YES;
+//    [cell.main_picture_view addGestureRecognizer:tapTwice];
     
-    UITapGestureRecognizer *delLike = [[UITapGestureRecognizer alloc] initWithTarget:self  action:@selector(instagramDelTap:)];
-    delLike.numberOfTapsRequired = 1;
-    cell.like.userInteractionEnabled = YES;
-    [cell.like addGestureRecognizer:delLike];
+//    UITapGestureRecognizer *delLike = [[UITapGestureRecognizer alloc] initWithTarget:self  action:@selector(instagramDelTap:)];
+//    delLike.numberOfTapsRequired = 1;
+//    cell.like.userInteractionEnabled = YES;
+//    [cell.like addGestureRecognizer:delLike];
     
     UITapGestureRecognizer *commentView = [[UITapGestureRecognizer alloc] initWithTarget:self  action:@selector(loadCommentView:)];
     UITapGestureRecognizer *commentViewMain = [[UITapGestureRecognizer alloc] initWithTarget:self  action:@selector(loadCommentViewMiddle:)];
@@ -479,14 +480,55 @@
         [test.like_label setTextColor:[UIColor whiteColor]];
         [test.like_image setImage:[UIImage imageNamed:@"heart_tumblr.png"]];
         
-        DataClass *su = [DataClass getInstance];
-        
+        NSArray *instagram_data = [self getUpdatedInstagram:temp_media];
         
         
     }
     else{
         NSLog(@"Connection could not be made");
     }
+}
++(NSMutableDictionary *)getUpdatedInstagram:(NSString *)mediaID{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *access = [[NSUserDefaults standardUserDefaults]
+                        stringForKey:@"instagram_access_token"];
+    
+    NSString *instagram_feed_url = [NSString stringWithFormat:[NSString stringWithFormat:@"https://api.instagram.com/v1/media/%@?access_token=%@", mediaID, access]];
+    NSURL *url = [NSURL URLWithString:instagram_feed_url];
+    NSData *data = [NSData dataWithContentsOfURL:url];
+    NSData *jsonData = data;
+    //parse out the json data
+    NSError* error;
+    NSDictionary* json = [NSJSONSerialization
+                          JSONObjectWithData:jsonData //1
+                          
+                          options:kNilOptions
+                          error:&error];
+    
+    NSArray *instagram_data = [json objectForKey:@"data"];
+    
+    NSMutableDictionary *temp = [[NSMutableDictionary alloc] initWithDictionary:[json objectForKey:@"data"]];
+        
+    [temp setObject:instagram_data forKey:@"instagram_data"];
+    [temp setObject:@"instagram" forKey:@"type"];
+    
+    
+    return temp;
+
+}
++(NSString *)addInstagramLike:(NSString *)text{
+    text = [[text componentsSeparatedByString:@" "] objectAtIndex:0];
+    int count = [text intValue];
+    count ++;
+    text = [NSString stringWithFormat:@"%d likes", count];
+    return text;
+}
++(NSString *)deleteInstagramLike:(NSString *)text{
+    text = [[text componentsSeparatedByString:@" "] objectAtIndex:0];
+    int count = [text intValue];
+    count --;
+    text = [NSString stringWithFormat:@"%d likes", count];
+    return text;
 }
 +(void)instagramDelTap:(UITapGestureRecognizer *)sender {
     //recognizer = (MediaInterface *)media_object.gestureRec;
@@ -505,12 +547,17 @@
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     NSString *access = [[NSUserDefaults standardUserDefaults]
                         stringForKey:@"instagram_access_token"];
-    
+    NSString *post = [NSString stringWithFormat:@"_method=DELETE"];
+    NSData *postData = [post dataUsingEncoding:NSASCIIStringEncoding allowLossyConversion:YES];
+    NSString *postLength = [NSString stringWithFormat:@"%d",[postData length]];
     NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
     [request setURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://api.instagram.com/v1/media/%@/likes?access_token=%@", temp_media, access]]];
-    [request setHTTPMethod:@"DEL"];
+    [request setValue:postLength forHTTPHeaderField:@"Content-Length"];
+    [request setHTTPMethod:@"POST"];
     [request setValue:@"application/x-www-form-urlencoded" forHTTPHeaderField:@"Current-Type"];
+    [request setHTTPBody:postData];
     NSURLConnection *conn = [[NSURLConnection alloc]initWithRequest:request delegate:self];
+    
     if(conn){
         NSLog(@"Connection Successful");
         [test.like setBackgroundColor:[UIColor colorWithWhite: 0.9 alpha:1]];
@@ -685,8 +732,7 @@
 }
 +(void)fetchInstagramFeed:(DataClass *)singleton_universal{
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    NSString *access = [[NSUserDefaults standardUserDefaults]
-                        stringForKey:@"instagram_access_token"];
+    NSString *access = [[NSUserDefaults standardUserDefaults] stringForKey:@"instagram_access_token"];
     NSString *instagram_base_url = @"https://api.instagram.com/v1/users/self/feed?access_token=";
     NSString *instagram_feed_url = [instagram_base_url stringByAppendingString:access];
     instagram_feed_url =[instagram_feed_url stringByAppendingString:@"&count=30"];
@@ -696,19 +742,22 @@
     NSData *data = [NSData dataWithContentsOfURL:url];
     NSData *jsonData = data;
     //parse out the json data
-    NSError* error;
-    NSDictionary* json = [NSJSONSerialization
-                          JSONObjectWithData:jsonData //1
-                          
-                          options:kNilOptions
-                          error:&error];
-    
-    NSArray *instagram_data = [json objectForKey:@"data"]; //2
-    //NSLog(@"%@", instagram_data);
-    //NSLog(@"%d",[instagram_data count]);
     singleton_universal.universal_instagram_feed = [[NSMutableDictionary alloc] init];
-    [singleton_universal.universal_instagram_feed setObject:instagram_data forKey:@"instagram_data"];
-    
+    if(jsonData != nil){
+        NSError* error;
+        NSDictionary* json = [NSJSONSerialization
+                              JSONObjectWithData:jsonData //1
+                              
+                              options:kNilOptions
+                              error:&error];
+        
+        BOOL dataExists = [ConnectionFunctions checkInstagramConnectionMeta:[json objectForKey:@"meta"]];
+        if(dataExists){
+            NSArray *instagram_data = [json objectForKey:@"data"];
+            [singleton_universal.universal_instagram_feed setObject:instagram_data forKey:@"instagram_data"];
+            [self createUniversalFeed:singleton_universal];
+        }
+    }
     
 
 }
@@ -925,14 +974,9 @@
 }
 +(void)createUniversalFeed:(DataClass *)singleton_universal{
     //First check which feeds to consolidate
-    NSString *documentsDirectory = [NSHomeDirectory()
-                                    stringByAppendingPathComponent:@"Documents"];
+    NSUserDefaults *d = [NSUserDefaults standardUserDefaults];
     
-    NSString *storePath = [documentsDirectory stringByAppendingPathComponent:@"instagram_auth.txt"];
-    NSString *content = [NSString stringWithContentsOfFile:storePath
-                                        encoding:NSUTF8StringEncoding
-                                           error:NULL];
-    if([content isEqualToString:@"yes"]){
+    if([[d objectForKey:@"instagram_connect"] isEqualToString:@"yes"]){
         [singleton_universal.universal_feed setObject:[singleton_universal.universal_instagram_feed objectForKey:@"instagram_data"] forKey:@"instagram_entry"];
         for(NSMutableDictionary *dat in [singleton_universal.universal_feed objectForKey:@"instagram_entry"]){
             NSMutableDictionary *temp = [[NSMutableDictionary alloc] initWithDictionary:dat];
@@ -1438,13 +1482,16 @@
     
 //    NSDictionary *temp_tumblr = [singleton_universal.universal_feed_array objectAtIndex:path];
     NSDictionary *temp_tumblr = [singleton_universal objectAtIndex:path];
-    
+
     NSString *username = [temp_tumblr objectForKey:@"blog_name"];
     NSString *caption = [temp_tumblr objectForKey:@"caption"];
     NSDictionary *photos = [temp_tumblr objectForKey:@"photos"];
     NSArray *tags = [temp_tumblr objectForKey:@"tags"];
     NSString *note_count = [[temp_tumblr objectForKey:@"note_count"] stringValue];
     //NSDate *date = [temp_tumblr objectForKey:@"date"];
+    NSString *liked = [[temp_tumblr objectForKey:@"liked"] stringValue];
+    cell.liked = liked;
+    cell.post_url = [temp_tumblr objectForKey:@"post_url"];
     
     NSArray *reblog_key = [temp_tumblr objectForKey:@"reblog_key"];
     NSString *tumblr_id = [[temp_tumblr objectForKey:@"id"] stringValue];
@@ -1663,9 +1710,15 @@
     cell.reblog_view.userInteractionEnabled = YES;
     [cell.reblog_view addGestureRecognizer:tumblrReblog];
     
-    UITapGestureRecognizer *tumblrLike = [[UITapGestureRecognizer alloc] initWithTarget:self  action:@selector(likeTumblr:)];
-    cell.heart_view.userInteractionEnabled = YES;
-    [cell.heart_view addGestureRecognizer:tumblrReblog];
+//    UITapGestureRecognizer *tumblrLike = [[UITapGestureRecognizer alloc] initWithTarget:self  action:@selector(likeTumblr:)];
+//    cell.heart_view.userInteractionEnabled = YES;
+//    [cell.heart_view addGestureRecognizer:tumblrLike];
+//    
+//    UITapGestureRecognizer *tumblrDoubleLike = [[UITapGestureRecognizer alloc] initWithTarget:self  action:@selector(likeDoubleTumblr:)];
+//    tumblrDoubleLike.numberOfTapsRequired = 2;
+//    cell.userInteractionEnabled = YES;
+//    [cell addGestureRecognizer:tumblrDoubleLike];
+    
     
     UITapGestureRecognizer *tumblrShare = [[UITapGestureRecognizer alloc] initWithTarget:self  action:@selector(shareTumblr:)];
     cell.share_view.userInteractionEnabled = YES;
@@ -1680,6 +1733,12 @@
     cell.username.userInteractionEnabled = YES;
     //    [cell.username setScrollEnabled:NO];
     [cell.username addGestureRecognizer:prof_user_tap];
+    
+    if([liked isEqualToString:@"0"]){
+        cell.heart_view.image = [UIImage imageNamed:@"heart_small.png"];
+    }else{
+        cell.heart_view.image = [UIImage imageNamed:@"heart_tumblr.png"];
+    }
     
     return cell;
 }
@@ -1732,6 +1791,81 @@
     
     // }];
     
+}
++(void)likeTumblr:(UITapGestureRecognizer *)responder{
+    
+    DataClass *singleton_universal = [DataClass getInstance];
+    
+    CGRect screenRect = [[UIScreen mainScreen] bounds];
+    CGFloat screenWidth = screenRect.size.width;
+    CGFloat screenHeight = screenRect.size.height;
+    
+    TumblrCell *test =[[[((TumblrCell *) responder.view) superview] superview] superview];
+    test.heart_view.image = [UIImage imageNamed:@"heart_tumblr.png"];
+    
+    
+    if([test.liked isEqualToString:@"0"]){
+        test.heart_view.image = [UIImage imageNamed:@"heart_tumblr.png"];
+        
+        [[TMAPIClient sharedInstance] like:test.unique_id reblogKey:test.reblog_key callback:^(id result, NSError *error) {
+            
+            if(error)
+                NSLog(@"%@", [error localizedDescription]);
+            if(!error){
+                NSLog(@"liked");
+                test.liked = @"1";
+            }
+        }];
+    }else{
+        test.heart_view.image = [UIImage imageNamed:@"heart_small.png"];
+        
+        [[TMAPIClient sharedInstance] unlike:test.unique_id reblogKey:test.reblog_key callback:^(id result, NSError *error) {
+            
+            if(error)
+                NSLog(@"%@", [error localizedDescription]);
+            if(!error){
+                NSLog(@"unliked");
+                test.liked = @"0";
+            }
+        }];
+    }
+    
+}
++(void)likeDoubleTumblr:(UITapGestureRecognizer *)responder{
+    
+    DataClass *singleton_universal = [DataClass getInstance];
+    
+    CGRect screenRect = [[UIScreen mainScreen] bounds];
+    CGFloat screenWidth = screenRect.size.width;
+    CGFloat screenHeight = screenRect.size.height;
+    
+    TumblrCell *test =((TumblrCell *) responder.view);
+    
+    if([test.liked isEqualToString:@"0"]){
+        test.heart_view.image = [UIImage imageNamed:@"heart_tumblr.png"];
+        
+        [[TMAPIClient sharedInstance] like:test.unique_id reblogKey:test.reblog_key callback:^(id result, NSError *error) {
+            
+            if(error)
+                NSLog(@"%@", [error localizedDescription]);
+            if(!error){
+                NSLog(@"liked");
+                test.liked = @"1";
+            }
+        }];
+    }else{
+        test.heart_view.image = [UIImage imageNamed:@"heart_small.png"];
+        
+        [[TMAPIClient sharedInstance] unlike:test.unique_id reblogKey:test.reblog_key callback:^(id result, NSError *error) {
+            
+            if(error)
+                NSLog(@"%@", [error localizedDescription]);
+            if(!error){
+                NSLog(@"unliked");
+                test.liked = @"0";
+            }
+        }];
+    }
 }
 
 +(void)loadRetweetSheet:(UITapGestureRecognizer *)responder{
@@ -1810,7 +1944,11 @@
         NSString *new_id = [CreationFunctions sendUndoRetweet:actionSheet.actual_media_id the_cell:actionSheet.twit_temp_cell];
     }
     if ([buttonTitle isEqualToString:@"Quote Tweet"]) {
-        NSLog(@"Quote Tweet Pressed");
+        DataClass *singleton_universal = [DataClass getInstance];
+        TwitterComposeScreenViewController *compose = [[TwitterComposeScreenViewController alloc] initForQuote:actionSheet.actual_media_id];
+        [singleton_universal.mainNavController presentViewController:compose animated:YES completion:^{
+            
+        }];
     }
     if ([buttonTitle isEqualToString:@"Cancel Button"]) {
         NSLog(@"Cancel pressed --> Cancel ActionSheet");
@@ -2324,6 +2462,27 @@
     }];
     
 }
++(void)loadTwitterQuote:(UITapGestureRecognizer *)responder{
+    TwitterCell *test =[[[((TwitterCell *) responder.view) superview] superview] superview];
+    
+    DataClass *singleton_universal = [DataClass getInstance];
+    
+    [UIView beginAnimations:@"Zoom" context:NULL];
+    [UIView setAnimationDuration:0.2];
+    test.reply_image.frame = CGRectMake(55, -5, 37, 37);
+    [UIView commitAnimations];
+    
+    [UIView beginAnimations:@"Zoom" context:NULL];
+    [UIView setAnimationDuration:0.8];
+    test.reply_image.frame = CGRectMake(70, 6.0f, 17, 17);
+    [UIView commitAnimations];
+    
+    TwitterComposeScreenViewController *compose = [[TwitterComposeScreenViewController alloc] initWithName:test.username.text stats:test.original_twitter_media_id];
+    [singleton_universal.mainNavController presentViewController:compose animated:YES completion:^{
+        
+    }];
+    
+}
 +(void)shareTumblr:(UITapGestureRecognizer *)responder{
     NSArray *activityItems = nil;
     NSArray * applicationActivities = nil;
@@ -2331,7 +2490,9 @@
     
     DataClass *singleton_universal = [DataClass getInstance];
     
-    NSString *postText = [[NSString alloc] initWithFormat:@"Testing send sheet"];
+    TumblrCell *test =[[[((TumblrCell *) responder.view) superview] superview] superview];
+    
+    NSString *postText = [[NSString alloc] initWithFormat:@"Check out this Tumblr post I found on my Feed - %@", test.post_url];
     activityItems = @[postText];
     UIActivityViewController *activityController = [[UIActivityViewController alloc] initWithActivityItems:activityItems applicationActivities:nil];
     [singleton_universal.mainNavController presentViewController:activityController animated:YES completion:nil];
@@ -2566,9 +2727,23 @@
         if ( [needle rangeOfString:@"@" options:NSCaseInsensitiveSearch].location != NSNotFound ) {
             InstagramCell *test =[[((InstagramCell *) recognizer.view) superview] superview];
 //            NSString *name = test.username.text;
+            NSString *access = [[NSUserDefaults standardUserDefaults] stringForKey:@"instagram_access_token"];
+            NSString *instagram_base_url = [NSString stringWithFormat:@"https://api.instagram.com/v1/users/search?q=%@&access_token=%@", needle, access];
+            NSURL *url = [NSURL URLWithString:instagram_base_url];
+            NSData *data = [NSData dataWithContentsOfURL:url];
+            NSData *jsonData = data;
+            //parse out the json data
+            NSError* error;
+            NSDictionary* json = [NSJSONSerialization
+                                  JSONObjectWithData:jsonData //1
+                                  
+                                  options:kNilOptions
+                                  error:&error];
             
-            ProfileView *profile = [[ProfileView alloc] initForInstagram:needle user_id:test.user_id type:@"instagram"];
-                        [singleton_universal.mainNavController pushViewController:profile animated:YES];
+            NSDictionary *instagram_data = [[json objectForKey:@"data"] objectAtIndex:0]; //2
+
+            ProfileView *profile = [[ProfileView alloc] initForInstagram:needle user_id:[instagram_data objectForKey:@"id" ] type:@"instagram"];
+            [singleton_universal.mainNavController pushViewController:profile animated:YES];
         }
         //
     }
@@ -2661,7 +2836,7 @@
                          new_frame.origin.y = screenHeight;
                          singleton_universal.urlWrapper.frame = new_frame;
                          
-                         [singleton_universal.mainNavController setNavigationBarHidden:YES];
+                         [singleton_universal.mainNavController setNavigationBarHidden:NO];
                      }
                      completion:^(BOOL finished){
                          singleton_universal.t.delegate = nil;

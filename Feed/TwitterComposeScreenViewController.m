@@ -16,7 +16,7 @@
     ALAssetsLibrary *library;
     NSArray *imageArray;
     NSMutableArray *assets, *pictures;
-    NSString *replT, *statID;
+    NSString *replT, *statID, *quoted;
 }
 
 @end
@@ -133,6 +133,14 @@ static int count=0;
     }
     return self;
 }
+-(id)initForQuote:(NSString *)quote{
+    self = [super init];
+    if (self) {
+        quoted = quote;
+        NSLog(quoted);
+    }
+    return self;
+}
 - (void)viewDidLoad
 {
     [super viewDidLoad];
@@ -191,8 +199,12 @@ static int count=0;
     inputText.font = [UIFont fontWithName:@"Helvetica" size:15.0f];
     inputText.delegate = self;
     inputText.keyboardType = UIKeyboardTypeTwitter;
-    NSString* firstName = [[replT componentsSeparatedByString:@" "] lastObject];
-    inputText.text = [NSString stringWithFormat:@"%@ ", firstName];
+    if(quoted != nil){
+        
+    }else{
+        NSString* firstName = [[replT componentsSeparatedByString:@" "] lastObject];
+        inputText.text = [NSString stringWithFormat:@"%@ ", firstName];
+    }
     [middle_section addSubview:inputText];
     
     profileImage = [[UIImageView alloc] initWithFrame:CGRectMake(10, 10, 30, 30)];

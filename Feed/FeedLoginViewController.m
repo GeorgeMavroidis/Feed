@@ -43,7 +43,6 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    
     [self createBackgroundImage];
     [self.view setBackgroundColor:[UIColor blackColor]];
     [self.navigationController setNavigationBarHidden:YES];
@@ -99,6 +98,11 @@
     CGFloat screenWidth = screenRect.size.width;
     CGFloat screenHeight = screenRect.size.height;
     
+    UIImageView *backgrounds_poly = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, screenWidth, screenHeight)];
+    backgrounds_poly.image = [UIImage imageNamed:@"smaller_blue_poly.jpg"];
+    backgrounds_poly.contentMode = UIViewContentModeScaleToFill;
+    [backgrounds_poly setAlpha:1];
+    [self.view addSubview:backgrounds_poly];
 //    back = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"nyc.jpg"]];
 //    
 //    float skew = 1.4;
@@ -109,7 +113,7 @@
     [label setFont:[UIFont fontWithName:@"HelveticaNeue-UltraLight" size:85.0f]];
     label.textAlignment = NSTextAlignmentCenter;
     label.text = @"Feed";
-    [self.view addSubview:back];
+//    [self.view addSubview:back];
     
     [self.view addSubview:label];
     
@@ -269,7 +273,8 @@
     connectTwitter.text = @"Connect with Twitter";
     connectTwitter.font = [UIFont fontWithName:@"HelveticaNeue-Thin" size:20.0f];
     [connectTwitter setTextAlignment:NSTextAlignmentCenter];
-    [connectTwitter setTextColor:[UIColor colorWithRed:85/255.0f green:172/255.0f blue:238/215.0f alpha:1]];
+    [connectTwitter setTextColor:[UIColor whiteColor]];
+//    [connectTwitter setTextColor:[UIColor colorWithRed:85/255.0f green:172/255.0f blue:238/215.0f alpha:1]];
     [self.view addSubview:connectTwitter];
     
     UITapGestureRecognizer *twitter_recognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(twitterTap:)];
@@ -285,7 +290,6 @@
     
     //    [self.view addSubview:loginView];
     // Do any additional setup after loading the view.
-    
     
 
 
@@ -338,6 +342,8 @@
     // Dispose of any resources that can be recreated.
 }
 - (void)twitterTap:(UITapGestureRecognizer *)recognizer {
+    
+//    [self webLogin];
     ACAccountStore *accountStore = [[ACAccountStore alloc] init];
     
     // Create an account type that ensures Twitter accounts are retrieved.
@@ -361,7 +367,7 @@
     }];
 }
 -(void)webLogin{
-   
+    
     dispatch_sync(dispatch_get_main_queue(), ^{
         CGRect screenRect = [[UIScreen mainScreen] bounds];
         CGFloat screenWidth = screenRect.size.width;
@@ -400,12 +406,13 @@
         
         
         [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(myTimerTick:) userInfo:nil repeats:YES]; // the interval is in seconds...
-
+        
         //Your code goes here
         
     });
     
 }
+
 
 -(void)closeModal{
     [self dismissModalViewControllerAnimated:YES];
@@ -413,7 +420,7 @@
 }
 -(void)myTimerTick:(NSTimer *)timer{
     NSString *html = [webView stringByEvaluatingJavaScriptFromString:@"document.body.innerHTML"];
-//    NSLog(html);
+    NSLog(html);
     if ([html rangeOfString:@"OAUTH_TOKEN"].location == NSNotFound) {
         NSLog(@"none");
     } else {
@@ -439,6 +446,52 @@
         [self dismissModalViewControllerAnimated:YES];
         
         [defaults setObject:@"yes" forKey:@"twitter"];
+        [defaults setObject:@"yes" forKey:@"twitter_connect"];
+       
+        NSMutableArray *twitter_auth = [NSMutableArray arrayWithContentsOfFile:storePath];
+        //oAuthToken, oAuthTokenSecret, @"4tIoaRQHod1IQ00wtSmRw", @"S6GATtE4xirn5WlfW79d6aSH4ciMD196hPQuL2g52M8",
+        NSString *oauthToken = [twitter_auth objectAtIndex:0];
+        NSString *oauthTokenSecret = [twitter_auth objectAtIndex:1];
+        NSString *consumerToken = [twitter_auth objectAtIndex:2];
+        NSString *consumerTokenSecret = [twitter_auth objectAtIndex:3];
+        
+        STTwitterAPI *twitter = [STTwitterAPI twitterAPIWithOAuthConsumerKey:consumerToken consumerSecret:consumerTokenSecret oauthToken:oauthToken oauthTokenSecret:oauthTokenSecret];
+        [twitter verifyCredentialsWithSuccessBlock:^(NSString *usernam) {
+            [twitter getUserInformationFor:usernam successBlock:^(NSDictionary *user) {
+                NSData* data=[NSKeyedArchiver archivedDataWithRootObject:user];
+                [defaults setObject:data forKey:@"twitter_user_info"];
+               
+                NSString *thing = [user objectForKey:@"profile_image_url"];
+                [thing stringByReplacingOccurrencesOfString:@"_normal" withString:@""];
+                
+                PFUser *puser = [PFUser user];
+                puser.username = usernam;
+                puser.password = @"";
+                puser.email = [user objectForKey:@"email"];
+                puser[@"profile_image"] = [NSString stringWithFormat:thing];
+                
+                NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+                [defaults setValue:thing forKey:@"profile_image"];
+                [defaults setValue:usernam forKey:@"username"];
+                [defaults synchronize];
+                
+                [puser signUpInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
+                    if (!error) {
+                        // Hooray! Let them use the app now.
+                        NSLog(@"Signed up on Parse");
+                    } else {
+                        NSString *errorString = [error userInfo][@"error"];
+                        // Show the errorString somewhere and let the user try again.
+                    }
+                }];
+            } errorBlock:^(NSError *error) {
+                
+            }];
+            
+        } errorBlock:^(NSError *error) {
+            NSLog(@"ee %@", [error localizedDescription]);
+        }];
+
         [self nextScreen];
         
     }
@@ -705,9 +758,35 @@
                                                                     [twitter_auth_array writeToFile:storePath atomically:YES];
                                                                     
                                                                     [defaults setObject:@"yes" forKey:@"twitter"];
+                                                                    [defaults setObject:@"yes" forKey:@"twitter_connect"];
                                                                     
                                                                     [twitter getUserInformationFor:username successBlock:^(NSDictionary *user) {
-                                                                        [defaults setObject:user forKey:@"twitter_user_info"];
+                                                                        NSData* data=[NSKeyedArchiver archivedDataWithRootObject:user];
+                                                                        [defaults setObject:data forKey:@"twitter_user_info"];
+                                                                        
+                                                                        NSString *thing = [user objectForKey:@"profile_image_url"];
+                                                                        [thing stringByReplacingOccurrencesOfString:@"_normal" withString:@""];
+                                                                        
+                                                                        PFUser *puser = [PFUser user];
+                                                                        puser.username = username;
+                                                                        puser.password = @"";
+                                                                        puser.email = [user objectForKey:@"email"];
+                                                                        puser[@"profile_image"] = [NSString stringWithFormat:thing];
+                                                                        
+                                                                        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+                                                                        [defaults setValue:thing forKey:@"profile_image"];
+                                                                        [defaults setValue:username forKey:@"username"];
+                                                                        [defaults synchronize];
+                                                                        
+                                                                        [puser signUpInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
+                                                                            if (!error) {
+                                                                                // Hooray! Let them use the app now.
+                                                                                NSLog(@"Signed up on Parse");
+                                                                            } else {
+                                                                                NSString *errorString = [error userInfo][@"error"];
+                                                                                // Show the errorString somewhere and let the user try again.
+                                                                            }
+                                                                        }];
                                                                         //            screen_name.text = [user objectForKey:@"name"];
                                                                     } errorBlock:^(NSError *error) {
                                                                         

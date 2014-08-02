@@ -11,6 +11,8 @@
 #import "AsyncImageView.h"
 #import "FeedComposeViewController.h"
 #import "STTwitterAPI.h"
+#import "MBProgressHUD.h"
+
 
 @implementation TwitterCompose{
     NSUserDefaults *defaults;
@@ -39,7 +41,7 @@
     
     mainComposeScrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(0,0, screenWidth, screenHeight)];
     mainComposeScrollView.delegate = self;
-    [mainComposeScrollView setContentSize:CGSizeMake(mainComposeScrollView.bounds.size.width, mainComposeScrollView.bounds.size.height+5)];
+    [mainComposeScrollView setContentSize:CGSizeMake(mainComposeScrollView.bounds.size.width, screenHeight+5)];
     [mainComposeScrollView setShowsVerticalScrollIndicator:NO];
     mainComposeScrollView.keyboardDismissMode = UIScrollViewKeyboardDismissModeInteractive;
     [self.view addSubview:mainComposeScrollView];
@@ -88,32 +90,16 @@
     usern.text = [defaults valueForKey:@"username"];
     usern.font = [UIFont fontWithName:@"Avenir-Black" size:15];
     [mainCompose addSubview:usern];
-    NSString *documentsDirectory = [NSHomeDirectory()
-                                    stringByAppendingPathComponent:@"Documents"];
-    NSString *storePath = [documentsDirectory stringByAppendingPathComponent:@"twitter_auth"];
-    NSMutableArray *twitter_auth = [NSMutableArray arrayWithContentsOfFile:storePath];
-    //oAuthToken, oAuthTokenSecret, @"4tIoaRQHod1IQ00wtSmRw", @"S6GATtE4xirn5WlfW79d6aSH4ciMD196hPQuL2g52M8",
-    NSString *oauthToken = [twitter_auth objectAtIndex:0];
-    NSString *oauthTokenSecret = [twitter_auth objectAtIndex:1];
-    NSString *consumerToken = [twitter_auth objectAtIndex:2];
-    NSString *consumerTokenSecret = [twitter_auth objectAtIndex:3];
-    STTwitterAPI *twitter = [STTwitterAPI twitterAPIWithOAuthConsumerKey:consumerToken consumerSecret:consumerTokenSecret oauthToken:oauthToken oauthTokenSecret:oauthTokenSecret];
     
-    [twitter verifyCredentialsWithSuccessBlock:^(NSString *usernam) {
-        [twitter getUserInformationFor:usernam successBlock:^(NSDictionary *user) {
-            NSLog(@"%@", user);
-            NSString *thing = [user objectForKey:@"profile_image_url"];
-            [thing stringByReplacingOccurrencesOfString:@"_normal" withString:@""];
-            profile_image.imageURL = [NSURL URLWithString:thing];
-            usern.text = usernam;
-//            screen_name.text = [user objectForKey:@"name"];
-        } errorBlock:^(NSError *error) {
-            
-        }];
-        
-    } errorBlock:^(NSError *error) {
-        NSLog(@"ee %@", [error localizedDescription]);
-    }];
+    
+    NSData* data_tui = [defaults objectForKey:@"twitter_user_info"];
+    NSDictionary *tui = [NSKeyedUnarchiver unarchiveObjectWithData:data_tui];
+    
+    NSString *thing = [tui objectForKey:@"profile_image_url"];
+    [thing stringByReplacingOccurrencesOfString:@"_normal" withString:@""];
+    profile_image.imageURL = [NSURL URLWithString:thing];
+    usern.text = [tui objectForKey:@"screen_name"];
+    
     
     
     footer = [[UIView alloc] initWithFrame:CGRectMake(0, mainCompose.frame.size.height-50, mainCompose.frame.size.width, 50)];
@@ -145,33 +131,71 @@
     count = 0;
 }
 -(void)sendButtonTapped:(UITapGestureRecognizer *)sender{
-    NSLog(@"heresy");
-    NSString *documentsDirectory = [NSHomeDirectory()
-                                    stringByAppendingPathComponent:@"Documents"];
-    NSString *storePath = [documentsDirectory stringByAppendingPathComponent:@"twitter_auth"];
-    NSMutableArray *twitter_auth = [NSMutableArray arrayWithContentsOfFile:storePath];
-    //oAuthToken, oAuthTokenSecret, @"4tIoaRQHod1IQ00wtSmRw", @"S6GATtE4xirn5WlfW79d6aSH4ciMD196hPQuL2g52M8",
-    NSString *oauthToken = [twitter_auth objectAtIndex:0];
-    NSString *oauthTokenSecret = [twitter_auth objectAtIndex:1];
-    NSString *consumerToken = [twitter_auth objectAtIndex:2];
-    NSString *consumerTokenSecret = [twitter_auth objectAtIndex:3];
-    
-    STTwitterAPI *twitter = [STTwitterAPI twitterAPIWithOAuthConsumerKey:consumerToken consumerSecret:consumerTokenSecret oauthToken:oauthToken oauthTokenSecret:oauthTokenSecret];
-    
-    [twitter postStatusUpdate:mainContent.text
-            inReplyToStatusID:nil
-                     latitude:nil
-                    longitude:nil
-                      placeID:nil
-           displayCoordinates:nil
-                     trimUser:nil
-                 successBlock:^(NSDictionary *status) {
-                     [self send];
-                 } errorBlock:^(NSError *error) {
-                     // ...
-                 }];
+    if([mainContent.text isEqualToString:@""]){
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Error"
+                                                        message:@"You must include text with your tweet."
+                                                       delegate:nil
+                                              cancelButtonTitle:@"OK"
+                                              otherButtonTitles:nil];
+        [alert show];
+    }else{
+        NSString *documentsDirectory = [NSHomeDirectory()
+                                        stringByAppendingPathComponent:@"Documents"];
+        NSString *storePath = [documentsDirectory stringByAppendingPathComponent:@"twitter_auth"];
+        NSMutableArray *twitter_auth = [NSMutableArray arrayWithContentsOfFile:storePath];
+        //oAuthToken, oAuthTokenSecret, @"4tIoaRQHod1IQ00wtSmRw", @"S6GATtE4xirn5WlfW79d6aSH4ciMD196hPQuL2g52M8",
+        NSString *oauthToken = [twitter_auth objectAtIndex:0];
+        NSString *oauthTokenSecret = [twitter_auth objectAtIndex:1];
+        NSString *consumerToken = [twitter_auth objectAtIndex:2];
+        NSString *consumerTokenSecret = [twitter_auth objectAtIndex:3];
+        
+        STTwitterAPI *twitter = [STTwitterAPI twitterAPIWithOAuthConsumerKey:consumerToken consumerSecret:consumerTokenSecret oauthToken:oauthToken oauthTokenSecret:oauthTokenSecret];
+        
+        
+        if(imageSelected == nil){
+            [twitter postStatusUpdate:mainContent.text
+                    inReplyToStatusID:nil
+                             latitude:nil
+                            longitude:nil
+                              placeID:nil
+                   displayCoordinates:nil
+                             trimUser:nil
+                         successBlock:^(NSDictionary *status) {
+                             [self send];
+                         } errorBlock:^(NSError *error) {
+                             // ...
+                         }];
+            
+        }else{
+            
+            [MBProgressHUD showHUDAddedTo:self.view animated:YES];
+            
+            NSString  *pngPath = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/twitter_upload.png"];
+            NSString  *jpgPath = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/twitter_upload.jpg"];
+            NSURL *fileURL = [[NSURL alloc] initFileURLWithPath:jpgPath];
+            
+            [twitter postStatusUpdate:mainContent.text
+                    inReplyToStatusID:nil
+                             mediaURL:fileURL
+                              placeID:nil
+                             latitude:nil
+                            longitude:nil
+             
+                  uploadProgressBlock:^(NSInteger bytesWritten, NSInteger totalBytesWritten, NSInteger totalBytesExpectedToWrite) {
+                      NSLog(@"%lu %lu %lu", bytesWritten, totalBytesWritten, totalBytesExpectedToWrite);
+                  } successBlock:^(NSDictionary *status) {
+                      [self send];
+                      [MBProgressHUD hideHUDForView:self.view animated:YES];
+                  } errorBlock:^(NSError *error) {
+                      //                   self.twitterPostTweetStatus = error ? [error localizedDescription] : @"Unknown error";
+                      NSLog(@"%@", [error localizedDescription]);
+                      [MBProgressHUD hideHUDForView:self.view animated:YES];
+                  }];
+        }
+    }
 
 }
+
 -(void)send{
     
     [self.navigationController setNavigationBarHidden:YES animated:YES];
@@ -244,6 +268,7 @@
         // Resize image
         UIGraphicsBeginImageContext(CGSizeMake(640, 960));
         [image drawInRect: CGRectMake(0, 0, 640, 960)];
+
         UIImage *smallImage = UIGraphicsGetImageFromCurrentImageContext();
         UIGraphicsEndImageContext();
         
@@ -274,9 +299,10 @@
     UIGraphicsEndImageContext();
     
     // Upload image
+
     NSData *imageData = UIImageJPEGRepresentation(image, 0.05f);
-    mainImage = [[UIView alloc] initWithFrame:CGRectMake(10, mainCompose.frame.size.height+mainCompose.frame.origin.y+20, screenWidth-20, 300)];
-    imageSelected = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, screenWidth-20, 300)];
+    mainImage = [[UIView alloc] initWithFrame:CGRectMake(10, mainCompose.frame.size.height+mainCompose.frame.origin.y+20, screenWidth-20, screenHeight-100)];
+    imageSelected = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, screenWidth-20, screenHeight-100)];
     imageSelected.image = smallImage;
     [mainImage addSubview:imageSelected];
     [mainImage setBackgroundColor:[UIColor whiteColor]];
@@ -295,6 +321,27 @@
     [xlabel addGestureRecognizer:t];
     
     [mainComposeScrollView addSubview:mainImage];
+    
+    
+    NSString  *pngPath = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/twitter_upload.png"];
+    NSString  *jpgPath = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/twitter_upload.jpg"];
+    // Write image to PNG
+    [UIImagePNGRepresentation(image) writeToFile:pngPath atomically:YES];
+    [UIImageJPEGRepresentation(image, 0.5) writeToFile:jpgPath atomically:YES];
+
+    // Let's check to see if files were successfully written...
+    
+    // Create file manager
+    NSError *error;
+    NSFileManager *fileMgr = [NSFileManager defaultManager];
+    
+    // Point to Document directory
+    NSString *documentsDirectory = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
+    
+    // Write out the contents of home directory to console
+    NSLog(@"Documents directory: %@", [fileMgr contentsOfDirectoryAtPath:documentsDirectory error:&error]);
+    UIImageWriteToSavedPhotosAlbum(smallImage, nil, nil, nil);
+//[UIImage imageWithData:imageData
     //    [self uploadImage:imageData];
 }
 -(void)createImageWithImage:(UIImage *)smallImage{
@@ -302,8 +349,8 @@
     CGRect screenRect = [[UIScreen mainScreen] bounds];
     CGFloat screenWidth = screenRect.size.width;
     CGFloat screenHeight = screenRect.size.height;
-    mainImage = [[UIView alloc] initWithFrame:CGRectMake(10, mainCompose.frame.size.height+mainCompose.frame.origin.y+20, screenWidth-20, 300)];
-    imageSelected = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, screenWidth-20, 300)];
+    mainImage = [[UIView alloc] initWithFrame:CGRectMake(10, mainCompose.frame.size.height+mainCompose.frame.origin.y+20, screenWidth-20, screenHeight-100)];
+    imageSelected = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, screenWidth-20, screenHeight-100)];
     imageSelected.image = smallImage;
     [mainImage addSubview:imageSelected];
     [mainImage setBackgroundColor:[UIColor whiteColor]];
@@ -322,8 +369,29 @@
     [xlabel addGestureRecognizer:t];
     
     [mainComposeScrollView addSubview:mainImage];
+    
+    NSString  *pngPath = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/twitter_upload.png"];
+    NSString  *jpgPath = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/twitter_upload.jpg"];
+    // Write image to PNG
+    [UIImagePNGRepresentation(smallImage) writeToFile:pngPath atomically:YES];
+    [UIImageJPEGRepresentation(smallImage, 0.5) writeToFile:jpgPath atomically:YES];
+    
+    // Let's check to see if files were successfully written...
+    
+    // Create file manager
+    NSError *error;
+    NSFileManager *fileMgr = [NSFileManager defaultManager];
+    
+    // Point to Document directory
+    NSString *documentsDirectory = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
+    
+    // Write out the contents of home directory to console
+    NSLog(@"Documents directory: %@", [fileMgr contentsOfDirectoryAtPath:documentsDirectory error:&error]);
+//    UIImageWriteToSavedPhotosAlbum(imageSelected.image, nil, nil, nil);
 }
 -(void)xImage{
+    
+    imageSelected = nil;
     NSLog(@"here");
     [UIView animateWithDuration:0.5
                           delay:0.0

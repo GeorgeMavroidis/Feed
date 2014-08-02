@@ -25,5 +25,8 @@
 @property (nonatomic, strong) NSString *unique_id;
 @property (nonatomic, strong) NSString *reblog_key;
 
+@property (nonatomic, strong) NSString *liked;
+@property (nonatomic, strong) NSString *post_url;
+
 
 @end

@@ -11,7 +11,7 @@
 #import "CreationFunctions.h"
 #import "TwitterCell.h"
 #import "AsyncImageView.h"
-
+#import "ConnectionFunctions.h"
 #import <TMAPIClient.h>
 #import "ProfileView.h"
 
@@ -36,32 +36,27 @@
     STTwitterAPI *twitter = [STTwitterAPI twitterAPIWithOAuthConsumerKey:consumerToken consumerSecret:consumerTokenSecret oauthToken:oauthToken oauthTokenSecret:oauthTokenSecret];
 //    NSLog(@"~%@~", hashtag);
     singleton_universal.universal_twitter_feed = [[NSMutableDictionary alloc] init];
-    [twitter verifyCredentialsWithSuccessBlock:^(NSString *bearerToken) {
-        [twitter getUserTimelineWithScreenName:hashtag count:100 successBlock:^(NSArray *statuses) {
-            [singleton_universal.universal_twitter_feed setObject:statuses forKey:@"twitter_data"];
-            [singleton_universal.universal_twitter_feed setObject:@"twitter" forKey:@"type"];
-            [self addTwitterToFeed:singleton_universal];
-            
-            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-                [self sortUniversalFeedByTime:singleton_universal];
-                dispatch_async(dispatch_get_main_queue(), ^(void){
-                    
-                    DataClass *su = [DataClass getInstance];
-                    ProfileView *t = (ProfileView *)su.mainViewController;
-                    [t update];
-                    [t.main_tableView reloadData];
-                    NSLog(@"donezo");
-                });
-//                [t.main_tableView reloadData];
-            });
-        } errorBlock:^(NSError *error) {
-            NSLog(@"%@", [error localizedDescription]);
-        }];
-
+    [twitter getUserTimelineWithScreenName:hashtag count:100 successBlock:^(NSArray *statuses) {
+        [singleton_universal.universal_twitter_feed setObject:statuses forKey:@"twitter_data"];
+        [singleton_universal.universal_twitter_feed setObject:@"twitter" forKey:@"type"];
+        [self addTwitterToFeed:singleton_universal];
         
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            [self sortUniversalFeedByTime:singleton_universal];
+            dispatch_async(dispatch_get_main_queue(), ^(void){
+                
+                DataClass *su = [DataClass getInstance];
+                ProfileView *t = (ProfileView *)su.mainViewController;
+                [t update];
+                [t.main_tableView reloadData];
+                NSLog(@"donezo");
+            });
+            //                [t.main_tableView reloadData];
+        });
     } errorBlock:^(NSError *error) {
-        // ...
+        NSLog(@"%@", [error localizedDescription]);
     }];
+
     
 }
 +(void)addTumblrToFeed:(ProfileDataClass *)singleton_universal{
@@ -129,20 +124,22 @@
     NSData *data = [NSData dataWithContentsOfURL:url];
     NSData *jsonData = data;
     //parse out the json data
-    NSError* error;
-    NSDictionary* json = [NSJSONSerialization
-                          JSONObjectWithData:jsonData //1
-                          
-                          options:kNilOptions
-                          error:&error];
-    
-    NSArray *instagram_data = [json objectForKey:@"data"]; //2
-    //    NSLog(@"%@", instagram_data);
-    //NSLog(@"%d",[instagram_data count]);
     singleton_universal.universal_instagram_feed = [[NSMutableDictionary alloc] init];
-    [singleton_universal.universal_instagram_feed setObject:instagram_data forKey:@"instagram_data"];
-    
-    
+    if(jsonData != nil){
+        NSError* error;
+        NSDictionary* json = [NSJSONSerialization
+                              JSONObjectWithData:jsonData //1
+                              
+                              options:kNilOptions
+                              error:&error];
+        
+        BOOL dataExists = [ConnectionFunctions checkInstagramConnectionMeta:[json objectForKey:@"meta"]];
+        if(dataExists){
+            NSArray *instagram_data = [json objectForKey:@"data"];
+            [singleton_universal.universal_instagram_feed setObject:instagram_data forKey:@"instagram_data"];
+            [self addInstagramFeed:singleton_universal];
+        }
+    }
     
 }
 +(void)fetchInstagramFeedForSelf:(ProfileDataClass *)singleton_universal{
@@ -162,19 +159,23 @@
     NSData *data = [NSData dataWithContentsOfURL:url];
     NSData *jsonData = data;
     //parse out the json data
-    NSError* error;
-    NSDictionary* json = [NSJSONSerialization
-                          JSONObjectWithData:jsonData //1
-                          
-                          options:kNilOptions
-                          error:&error];
-    
-    NSArray *instagram_data = [json objectForKey:@"data"]; //2
-    //    NSLog(@"%@", instagram_data);
-    //NSLog(@"%d",[instagram_data count]);
+
     singleton_universal.universal_instagram_feed = [[NSMutableDictionary alloc] init];
-    [singleton_universal.universal_instagram_feed setObject:instagram_data forKey:@"instagram_data"];
-    
+    if(jsonData != nil){
+        NSError* error;
+        NSDictionary* json = [NSJSONSerialization
+                              JSONObjectWithData:jsonData //1
+                              
+                              options:kNilOptions
+                              error:&error];
+        
+        BOOL dataExists = [ConnectionFunctions checkInstagramConnectionMeta:[json objectForKey:@"meta"]];
+        if(dataExists){
+            NSArray *instagram_data = [json objectForKey:@"data"];
+            [singleton_universal.universal_instagram_feed setObject:instagram_data forKey:@"instagram_data"];
+            [self addInstagramFeed:singleton_universal];
+        }
+    }
     
     
 }

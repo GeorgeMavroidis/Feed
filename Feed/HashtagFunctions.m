@@ -13,6 +13,7 @@
 #import "AsyncImageView.h"
 #import "HashtagSearch.h"
 #import <TMAPIClient.h>
+#import "ConnectionFunctions.h"
 
 @implementation HashtagFunctions
 
@@ -141,18 +142,22 @@
     NSData *data = [NSData dataWithContentsOfURL:url];
     NSData *jsonData = data;
     //parse out the json data
-    NSError* error;
-    NSDictionary* json = [NSJSONSerialization
-                          JSONObjectWithData:jsonData //1
-                          
-                          options:kNilOptions
-                          error:&error];
-    
-    NSArray *instagram_data = [json objectForKey:@"data"]; //2
-//    NSLog(@"%@", instagram_data);
-    //NSLog(@"%d",[instagram_data count]);
     singleton_universal.universal_instagram_feed = [[NSMutableDictionary alloc] init];
-    [singleton_universal.universal_instagram_feed setObject:instagram_data forKey:@"instagram_data"];
+    if(jsonData != nil){
+        NSError* error;
+        NSDictionary* json = [NSJSONSerialization
+                              JSONObjectWithData:jsonData //1
+                              
+                              options:kNilOptions
+                              error:&error];
+        
+        BOOL dataExists = [ConnectionFunctions checkInstagramConnectionMeta:[json objectForKey:@"meta"]];
+        if(dataExists){
+            NSArray *instagram_data = [json objectForKey:@"data"];
+            [singleton_universal.universal_instagram_feed setObject:instagram_data forKey:@"instagram_data"];
+            [self addInstagramFeed:singleton_universal];
+        }
+    }
     
     
     

@@ -11,6 +11,7 @@
 #import <TMAPIClient.h>
 #import "FeedMainViewController.h"
 #import "TumblrComposeViewController.h"
+#import "DataClass.h"
 
 @implementation NewConnectView{
     CGRect screenRect;
@@ -26,10 +27,17 @@
     screenWidth = screenRect.size.width;
     screenHeight = screenRect.size.height;
     
+    
+    UIImageView *backgrounds_poly = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, screenWidth, screenHeight)];
+    backgrounds_poly.image = [UIImage imageNamed:@"smaller_darker_blue.jpg"];
+    backgrounds_poly.contentMode = UIViewContentModeScaleToFill;
+    [backgrounds_poly setAlpha:0.6];
+    [self.view addSubview:backgrounds_poly];
+    
     UIView *black = [[UIView alloc] initWithFrame:CGRectMake(0, 0, screenWidth, screenHeight)];
     [black setBackgroundColor:[UIColor blackColor]];
     black.alpha = 0.6;
-    [self.view addSubview:black];
+//    [self.view addSubview:black];
     
     mainScrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(0, 0, screenWidth, screenHeight)];
     mainScrollView.contentSize = CGSizeMake(screenWidth, screenHeight+20);
@@ -123,6 +131,7 @@
         NSString *storePath = [documentsDirectory stringByAppendingPathComponent:@"instagram_auth.txt"];
         [@"yes" writeToFile:storePath atomically:YES];
         
+        [defaults setObject:@"yes" forKey:@"instagram_connect"];
         
         //NSLog(split[1]);
         [timer invalidate];
@@ -212,7 +221,29 @@
         [defaults setObject:os forKey:@"Tumblr_OAuthToken"];
         [defaults setObject:osec forKey:@"Tumblr_OAuthTokenSecret"];
         [defaults setObject:@"0" forKey:@"defaultTumblrBlog"];
+        [defaults setObject:@"yes" forKey:@"tumblr_connect"];
+        
         [timer invalidate];
+        int defTB = 0;
+        [defaults setInteger:0 forKey:@"defaultTumblrBlog"];
+        [defaults setObject:@"yes" forKey:@"tumblr_connect"];
+        NSLog(@"set in");
+        
+        
+        DataClass *d_su = [DataClass getInstance];
+        
+        [[TMAPIClient sharedInstance] userInfo:^(id result, NSError *error) {
+            if (!error){
+                NSDictionary *t = result;
+                NSMutableDictionary *blogs = [[result objectForKey:@"user"] objectForKey:@"blogs"];
+                d_su.tumblrBlogs = blogs;
+                NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+                [defaults setObject:blogs forKey:@"tumblrBlogs"];
+                [defaults setObject:[[[defaults objectForKey:@"tumblrBlogs"] objectAtIndex:defTB] objectForKey:@"name"] forKey:@"default_tumblr_blog"];
+                
+            }
+        }];
+
         [self dismissModalViewControllerAnimated:YES];
         
         [self drawNext];

@@ -44,7 +44,8 @@
     float navController_height = 40;
     
     mainComposeScrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(0,0, screenWidth, screenHeight)];
-    [mainComposeScrollView setContentSize:CGSizeMake(mainComposeScrollView.bounds.size.width, mainComposeScrollView.bounds.size.height+5)];
+    mainComposeScrollView.delegate = self;
+    [mainComposeScrollView setContentSize:CGSizeMake(mainComposeScrollView.bounds.size.width, screenHeight+5)];
     [mainComposeScrollView setShowsVerticalScrollIndicator:NO];
     mainComposeScrollView.keyboardDismissMode = UIScrollViewKeyboardDismissModeInteractive;
     [self.view addSubview:mainComposeScrollView];
@@ -90,7 +91,7 @@
     chosen_blog = 0;
     NSDictionary *defTumb = [[NSDictionary alloc] init];
     
-    defTumb = [singleton_universal.tumblrBlogs objectAtIndex:0];
+    defTumb = [[defaults objectForKey:@"tumblrBlogs"] objectAtIndex:0];
     
     chosen_blog = [defTumb objectForKey:@"name"];
     [profile_image setImageWithURL:[NSURL URLWithString:[self returnTumblrProfilePicture:chosen_blog]] placeholderImage:[UIImage imageNamed:@"insta_placeholder.png"]];
@@ -140,13 +141,46 @@
 }
 -(void)sendButtonTapped:(UITapGestureRecognizer *)sender{
     
-    NSDictionary *params = @{@"body" : mainContent.text};
+    if(imageSelected == nil){
+        NSDictionary *params = @{@"body" : mainContent.text};
+        
+        [[TMAPIClient sharedInstance] post:chosen_blog type:@"text" parameters:params callback:^(id result, NSError *error) {
+            if(!error)
+                [self send];
+            
+            if(error)
+                NSLog(@"%@", [error localizedDescription]);
+        }];
+    }else{
+        
+        [MBProgressHUD showHUDAddedTo:self.view animated:YES];
+        NSString  *pngPath = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/tumblr_upload.png"];
+        NSString  *jpgPath = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/tumblr_upload.jpg"];
+        NSURL *fileURL = [[NSURL alloc] initFileURLWithPath:jpgPath];
+        
+        [[TMAPIClient sharedInstance] photo:chosen_blog
+                              filePathArray:@[jpgPath]
+                           contentTypeArray:@[@"image/jpg"]
+                              fileNameArray:@[@"Default.png"]
+                                 parameters:@{@"caption" : mainContent.text}
+                                   callback:^(id response, NSError *error) {
+                                       if (error)
+                                           NSLog(@"Error posting to Tumblr %@", [error localizedDescription]);
+                                       else{
+                                           NSLog(@"Posted to Tumblr");
+                                           [self send];
+                                       }
+                                       
+                                       [MBProgressHUD hideHUDForView:self.view animated:YES];
+                                       
+                                   }];
+//        [[TMAPIClient sharedInstance] post:chosen_blog type:@"photo" parameters:params callback:^(id result, NSError *error) {
+//            [self send];
+//            if(error)
+//                NSLog(@"%@", [error localizedDescription]);
+//        }];
+    }
     
-    [[TMAPIClient sharedInstance] post:chosen_blog type:@"text" parameters:params callback:^(id result, NSError *error) {
-        [self send];
-        if(error)
-            NSLog(@"%@", [error localizedDescription]);
-    }];
      
 }
 -(void)send{
@@ -209,13 +243,13 @@
     [mainComposeScrollView addSubview:s];
     DataClass *su = [DataClass getInstance];
     
-    int numberOfBlogs = [su.tumblrBlogs count];
+    int numberOfBlogs = [[defaults objectForKey:@"tumblrBlogs"] count];
     for(int i =0; i < numberOfBlogs; i++){
         UIView *temp = [[UIView alloc] initWithFrame:CGRectMake(0, 40*i, s.frame.size.width, 40)];
         [s addSubview:temp];
         
         UILabel *tt = [[UILabel alloc] initWithFrame:CGRectMake(40, 40*i, 200, 40)];
-        tt.text = [[su.tumblrBlogs objectAtIndex:i] objectForKey:@"name"];
+        tt.text = [[[defaults objectForKey:@"tumblrBlogs"] objectAtIndex:i] objectForKey:@"name"];
         [s addSubview:tt];
         
         UIImageView *ti = [[UIImageView alloc] initWithFrame:CGRectMake(0, 40*i+5, 30, 30)];
@@ -304,8 +338,8 @@
     
     // Upload image
     NSData *imageData = UIImageJPEGRepresentation(image, 0.05f);
-    mainImage = [[UIView alloc] initWithFrame:CGRectMake(10, mainCompose.frame.size.height+mainCompose.frame.origin.y+20, screenWidth-20, 300)];
-    imageSelected = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, screenWidth-20, 300)];
+    mainImage = [[UIView alloc] initWithFrame:CGRectMake(10, mainCompose.frame.size.height+mainCompose.frame.origin.y+20, screenWidth-20, screenHeight-60)];
+    imageSelected = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, screenWidth-20, screenHeight-60)];
     imageSelected.image = smallImage;
     [mainImage addSubview:imageSelected];
     [mainImage setBackgroundColor:[UIColor whiteColor]];
@@ -323,6 +357,26 @@
     t.numberOfTapsRequired = 1;
     [xlabel addGestureRecognizer:t];
     [mainComposeScrollView addSubview:mainImage];
+    
+    NSString  *pngPath = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/tumblr_upload.png"];
+    NSString  *jpgPath = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/tumblr_upload.jpg"];
+    // Write image to PNG
+    [UIImagePNGRepresentation(image) writeToFile:pngPath atomically:YES];
+    [UIImageJPEGRepresentation(image, 0.5) writeToFile:jpgPath atomically:YES];
+    
+    // Let's check to see if files were successfully written...
+    
+    // Create file manager
+    NSError *error;
+    NSFileManager *fileMgr = [NSFileManager defaultManager];
+    
+    // Point to Document directory
+    NSString *documentsDirectory = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
+    
+    // Write out the contents of home directory to console
+    NSLog(@"Documents directory: %@", [fileMgr contentsOfDirectoryAtPath:documentsDirectory error:&error]);
+    UIImageWriteToSavedPhotosAlbum(smallImage, nil, nil, nil);
+    
     //    [self uploadImage:imageData];
 }
 -(void)createImageWithImage:(UIImage *)smallImage{
@@ -330,8 +384,8 @@
     CGRect screenRect = [[UIScreen mainScreen] bounds];
     CGFloat screenWidth = screenRect.size.width;
     CGFloat screenHeight = screenRect.size.height;
-    mainImage = [[UIView alloc] initWithFrame:CGRectMake(10, mainCompose.frame.size.height+mainCompose.frame.origin.y+20, screenWidth-20, 300)];
-    imageSelected = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, screenWidth-20, 300)];
+    mainImage = [[UIView alloc] initWithFrame:CGRectMake(10, mainCompose.frame.size.height+mainCompose.frame.origin.y+20, screenWidth-20, screenHeight-60)];
+    imageSelected = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, screenWidth-20, screenHeight-60)];
     imageSelected.image = smallImage;
     [mainImage addSubview:imageSelected];
     [mainImage setBackgroundColor:[UIColor whiteColor]];
@@ -350,8 +404,28 @@
     [xlabel addGestureRecognizer:t];
     
     [mainComposeScrollView addSubview:mainImage];
+    
+    NSString  *pngPath = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/tumblr_upload.png"];
+    NSString  *jpgPath = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/tumblr_upload.jpg"];
+    // Write image to PNG
+    [UIImagePNGRepresentation(smallImage) writeToFile:pngPath atomically:YES];
+    [UIImageJPEGRepresentation(smallImage, 0.5) writeToFile:jpgPath atomically:YES];
+    // Let's check to see if files were successfully written...
+    
+    // Create file manager
+    NSError *error;
+    NSFileManager *fileMgr = [NSFileManager defaultManager];
+    
+    // Point to Document directory
+    NSString *documentsDirectory = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
+    
+    // Write out the contents of home directory to console
+    NSLog(@"Documents directory: %@", [fileMgr contentsOfDirectoryAtPath:documentsDirectory error:&error]);
+//    UIImageWriteToSavedPhotosAlbum(imageSelected.image, nil, nil, nil);
 }
 -(void)xImage{
+    
+    imageSelected = nil;
     NSLog(@"here");
     [UIView animateWithDuration:0.5
                           delay:0.0

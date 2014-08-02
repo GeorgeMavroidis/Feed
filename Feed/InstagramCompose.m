@@ -37,7 +37,8 @@
     float navController_height = 40;
     
     mainComposeScrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(0,0, screenWidth, screenHeight)];
-    [mainComposeScrollView setContentSize:CGSizeMake(mainComposeScrollView.bounds.size.width, mainComposeScrollView.bounds.size.height+5)];
+    mainComposeScrollView.delegate = self;
+    [mainComposeScrollView setContentSize:CGSizeMake(mainComposeScrollView.bounds.size.width, screenHeight+5)];
     [mainComposeScrollView setShowsVerticalScrollIndicator:NO];
     mainComposeScrollView.keyboardDismissMode = UIScrollViewKeyboardDismissModeInteractive;
     [self.view addSubview:mainComposeScrollView];
@@ -63,6 +64,27 @@
     UIView *footerView = [[UIView alloc] initWithFrame:CGRectMake(10, mainCompose.frame.size.height-30, screenWidth-40, 30)];
     [mainCompose addSubview:footerView];
     
+    
+    
+    UILabel *usern = [[UILabel alloc] initWithFrame:CGRectMake(70, 10, mainCompose.frame.size.width-50, 50)];
+    NSString *access = [[NSUserDefaults standardUserDefaults]
+                        stringForKey:@"instagram_access_token"];
+    NSString *instagram_base_url = @"https://api.instagram.com/v1/users/self/?access_token=";
+    NSString *instagram_feed_url = [instagram_base_url stringByAppendingString:access];
+    
+    NSString *instagram_user_feed = [NSString stringWithFormat:instagram_feed_url];
+    NSURL *url = [NSURL URLWithString:instagram_feed_url];
+    NSData *data = [NSData dataWithContentsOfURL:url];
+    NSData *jsonData = data;
+    //parse out the json data
+    NSError* error;
+    NSDictionary* json = [NSJSONSerialization
+                          JSONObjectWithData:jsonData //1
+                          
+                          options:kNilOptions
+                          error:&error];
+    
+    NSDictionary *instagram_data = [json objectForKey:@"data"]; //2
     UIImageView *profile_picture = [[UIImageView alloc] initWithFrame:CGRectMake(0, 10, 30, 30)];
     [headerCompose addSubview:profile_picture];
     // Do any additional setup after loading the view.
@@ -71,7 +93,7 @@
     UIImageView *profile_image = [[UIImageView alloc] initWithFrame:CGRectMake(10, 10, 40, 40)];
     [profile_image setBackgroundColor:[UIColor whiteColor]];
     profile_image.layer.cornerRadius = 40/2;
-    NSString *prof_img = [defaults valueForKey:@"profile_image"];
+    NSString *prof_img = [instagram_data objectForKey:@"profile_picture"];
     prof_img = [prof_img stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
     profile_image.layer.masksToBounds = YES;
     profile_image.imageURL = [NSURL URLWithString:prof_img];
@@ -79,12 +101,11 @@
     profile_image.frame = CGRectMake(10, 5, 40, 40);
     profile_image.layer.cornerRadius = 40/2;
     [mainCompose addSubview:content_header];
-    
-    UILabel *usern = [[UILabel alloc] initWithFrame:CGRectMake(70, 10, mainCompose.frame.size.width-50, 50)];
-    usern.text = [defaults valueForKey:@"username"];
+    //    NSLog(@"data %@", instagram_data);
+    usern.text = [instagram_data objectForKey:@"username" ];
     usern.font = [UIFont fontWithName:@"Avenir-Black" size:15];
     [mainCompose addSubview:usern];
-    
+   
     
     footer = [[UIView alloc] initWithFrame:CGRectMake(0, mainCompose.frame.size.height-50, mainCompose.frame.size.width, 50)];
     [footer setBackgroundColor:[UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.1]];
@@ -99,11 +120,12 @@
     [footer addSubview:camera];
     [camera addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(cameraButtonTapped:)]];
     
-    UIView *send = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 90, 90)];
+    UIView *send = [[UIView alloc] initWithFrame:CGRectMake(footer.frame.size.width-40, 0, 90, 90)];
     UIImageView *send_icon = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"send-grey.png"]];
-    send_icon.frame = CGRectMake(footer.frame.size.width-40, 10, 30, 30);
+    send_icon.frame = CGRectMake(0, 10, 30, 30);
     [send addSubview:send_icon];
     [footer addSubview:send];
+    [send setUserInteractionEnabled:YES];
     [send addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(sendButtonTapped:)]];
     
     UIImageView *bgImage = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"instagram_a6a6a6_100.png"]];
@@ -112,14 +134,52 @@
     [mainCompose addSubview:bgImage];
     mainComposeScrollView.delegate = self;
     count = 0;
+    
+}
+-(void)sendButtonTapped:(UITapGestureRecognizer *)sender{
+    
+    if(imageSelected == nil){
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Error"
+                                                        message:@"You must include a photo for Instagram."
+                                                       delegate:nil
+                                              cancelButtonTitle:@"OK"
+                                              otherButtonTitles:nil];
+        [alert show];
+    }else{
+        NSString* imagePath = [NSString stringWithFormat:@"%@/instagramShare.igo", [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject]];
+        [[NSFileManager defaultManager] removeItemAtPath:imagePath error:nil];
+        
+        UIImage *instagramImage = imageSelected.image;
+        [UIImagePNGRepresentation(instagramImage) writeToFile:imagePath atomically:YES];
+        NSLog(@"Image Size >>> %@", NSStringFromCGSize(instagramImage.size));
+        
+        self.dic=[UIDocumentInteractionController interactionControllerWithURL:[NSURL fileURLWithPath:imagePath]];
+        self.dic.delegate = self;
+        self.dic.UTI = @"com.instagram.exclusivegram";
+        self.dic.annotation = @{@"InstagramCaption": [NSString stringWithFormat:@"%@ #feedapp",mainContent.text]};
+        [self.dic presentOpenInMenuFromRect: self.view.frame inView:self.view animated:YES ];
+        
+
+    }
+}
+- (UIDocumentInteractionController *) setupControllerWithURL: (NSURL*) fileURL usingDelegate: (id <UIDocumentInteractionControllerDelegate>) interactionDelegate {
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Note"
+                                                    message:@"Please note that this photo will be posted to the Instagram profile that you are signed into Instagram's app with."
+                                                   delegate:nil
+                                          cancelButtonTitle:@"OK"
+                                          otherButtonTitles:nil];
+    
+    UIDocumentInteractionController *interactionController = [UIDocumentInteractionController interactionControllerWithURL: fileURL];
+    interactionController.delegate = interactionDelegate;
+    return interactionController;
 }
 -(void)createImageWithImage:(UIImage *)smallImage{
     
     CGRect screenRect = [[UIScreen mainScreen] bounds];
     CGFloat screenWidth = screenRect.size.width;
     CGFloat screenHeight = screenRect.size.height;
-    mainImage = [[UIView alloc] initWithFrame:CGRectMake(10, mainCompose.frame.size.height+mainCompose.frame.origin.y+20, screenWidth-20, 300)];
-    imageSelected = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, screenWidth-20, 300)];
+    mainImage = [[UIView alloc] initWithFrame:CGRectMake(10, mainCompose.frame.size.height+mainCompose.frame.origin.y+20, screenWidth-20, screenHeight-60)];
+    imageSelected = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, screenWidth-20, screenHeight-60)];
     imageSelected.image = smallImage;
     [mainImage addSubview:imageSelected];
     [mainImage setBackgroundColor:[UIColor whiteColor]];
@@ -138,6 +198,23 @@
     [xlabel addGestureRecognizer:t];
     
     [mainComposeScrollView addSubview:mainImage];
+    
+    NSString  *pngPath = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/instagram_upload.png"];
+    NSString  *jpgPath = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/instagram_upload.igo"];
+    // Write image to PNG
+    [UIImagePNGRepresentation(smallImage) writeToFile:pngPath atomically:YES];
+    [UIImageJPEGRepresentation(smallImage, 0.5) writeToFile:jpgPath atomically:YES];
+    // Let's check to see if files were successfully written...
+    
+    // Create file manager
+    NSError *error;
+    NSFileManager *fileMgr = [NSFileManager defaultManager];
+    
+    // Point to Document directory
+    NSString *documentsDirectory = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
+    
+    // Write out the contents of home directory to console
+    NSLog(@"Documents directory: %@", [fileMgr contentsOfDirectoryAtPath:documentsDirectory error:&error]);//    UIImageWriteToSavedPhotosAlbum(imageSelected.image, nil, nil, nil);
 }
 - (IBAction)cameraButtonTapped:(id)sender{
     if ([UIImagePickerController isSourceTypeAvailable:
@@ -192,8 +269,8 @@
     
     // Upload image
     NSData *imageData = UIImageJPEGRepresentation(image, 0.05f);
-    mainImage = [[UIView alloc] initWithFrame:CGRectMake(10, mainCompose.frame.size.height+mainCompose.frame.origin.y+20, screenWidth-20, 300)];
-    imageSelected = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, screenWidth-20, 300)];
+    mainImage = [[UIView alloc] initWithFrame:CGRectMake(10, mainCompose.frame.size.height+mainCompose.frame.origin.y+20, screenWidth-20, screenHeight-60)];
+    imageSelected = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, screenWidth-20, screenHeight-60)];
     imageSelected.image = smallImage;
     [mainImage addSubview:imageSelected];
     [mainImage setBackgroundColor:[UIColor whiteColor]];
@@ -213,8 +290,28 @@
     
     [mainComposeScrollView addSubview:mainImage];
     //    [self uploadImage:imageData];
+    NSString  *pngPath = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/instagram_upload.png"];
+    NSString  *jpgPath = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/instagram_upload.jpg"];
+    // Write image to PNG
+    [UIImagePNGRepresentation(image) writeToFile:pngPath atomically:YES];
+    [UIImageJPEGRepresentation(image, 0.5) writeToFile:jpgPath atomically:YES];
+    
+    // Let's check to see if files were successfully written...
+    
+    // Create file manager
+    NSError *error;
+    NSFileManager *fileMgr = [NSFileManager defaultManager];
+    
+    // Point to Document directory
+    NSString *documentsDirectory = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
+    
+    // Write out the contents of home directory to console
+    NSLog(@"Documents directory: %@", [fileMgr contentsOfDirectoryAtPath:documentsDirectory error:&error]);
+    UIImageWriteToSavedPhotosAlbum(smallImage, nil, nil, nil);
 }
 -(void)xImage{
+    
+    imageSelected = nil;
     NSLog(@"here");
     [UIView animateWithDuration:0.5
                           delay:0.0
@@ -244,7 +341,6 @@
 }
 -(void)cancel{
     //self.view.alpha = 0;
-    
     [self.navigationController setNavigationBarHidden:YES animated:YES];
     [mainContent resignFirstResponder];
     

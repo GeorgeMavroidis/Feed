@@ -19,6 +19,9 @@
 #import <Accounts/Accounts.h>
 #import "MBProgressHUD.h"
 #import "AsyncImageView.h"
+#import "FeedLoginViewController.h"
+#import <Parse/Parse.h>
+#import "ConnectionFunctions.h"
 
 @implementation ProfileView{
     NSString *profiled, *typed, *insta_id;
@@ -36,7 +39,7 @@
     UIScrollView *mainSettingSV;
     UIWebView *webView;
     
-    UILabel *twitter_username, *tumblr_username;
+    UILabel *twitter_username, *tumblr_username, *instagram_username;
     UIScrollView *s;
     UIView *tumblr_view, *connectV;
 }
@@ -145,7 +148,12 @@
     back_btn.image = [UIImage imageNamed:@"arrow_back.png"];
     [headerViewNew addSubview:back_btn];
     
-//    [headerViewNew addSubview:hashtag];
+    [MBProgressHUD showHUDAddedTo:self.view animated:YES];
+    NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval: 2
+                                             target: self
+                                           selector: @selector(hideProg)
+                                           userInfo: nil
+                                            repeats: NO];
     [self fetchFeeds];
     
 //    [HashtagFunctions sortUniversalFeedByTime:singleton_universal];
@@ -156,7 +164,10 @@
     
     [self createSettingsPage];
     
-    [main_tableView setContentInset:UIEdgeInsetsMake(40,0,0,0)];
+    [main_tableView setContentInset:UIEdgeInsetsMake(0,0,0,0)];
+}
+-(void)hideProg{
+    [MBProgressHUD hideHUDForView:self.view animated:YES];
 }
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
@@ -166,6 +177,15 @@
     CGFloat screenWidth = screenRect.size.width;
     CGFloat screenHeight = screenRect.size.height;
     //    [main_tableView scrollRectToVisible:CGRectMake(0, main_tableView.contentSize.height - main_tableView.bounds.size.height, screenWidth, screenHeight-55) animated:NO];
+    
+    DataClass *singleton_universal =[DataClass getInstance];
+    ProfileDataClass *psu =[ProfileDataClass getInstance];
+    psu.mainTableView = main_tableView;
+//    singleton_universal.universal_feed_array = local_universal_feed_array;
+    singleton_universal.mainNavController = self.navigationController;
+    singleton_universal.mainViewController = self;
+    [self update];
+    NSLog(@"here");
 }
 -(void)viewDidDisappear:(BOOL)animated{
     [super viewDidDisappear:animated];
@@ -175,8 +195,6 @@
     [super viewWillDisappear:animated];
     [self.navigationController setNavigationBarHidden:YES];
     //    [inputTextView resignFirstResponder];
-    
-    
 }
 -(void)viewWillAppear:(BOOL)animated{
     
@@ -189,31 +207,20 @@
     self.navigationController.view.backgroundColor = [UIColor clearColor];
     [self.navigationController.navigationBar setTitleTextAttributes:@{NSForegroundColorAttributeName : [UIColor clearColor]}];
     
-    CGRect screenRect = [[UIScreen mainScreen] bounds];
-    CGFloat screenWidth = screenRect.size.width;
-    CGFloat screenHeight = screenRect.size.height;
-    //    [main_tableView scrollRectToVisible:CGRectMake(0, main_tableView.contentSize.height - main_tableView.bounds.size.height, screenWidth, screenHeight-55) animated:NO];
-    DataClass *singleton_universal =[DataClass getInstance];
-    
-    singleton_universal.mainTableView = main_tableView;
-    //    singleton_universal.mainNavController = self.navigationController;
-    singleton_universal.mainViewController = self;
-    
+
 }
 -(void)update{
     [refresh beginRefreshing];
-    local_universal_feed_array = singleton_universal.universal_feed_array;
+    if([typed isEqualToString:@"self"]){
+        local_universal_feed_array = singleton_universal.universal_feed_array;
+    }
     [main_tableView reloadData];
     [main_tableView setNeedsDisplay];
     [refresh endRefreshing];
 }
 -(void)fetchFeeds{
     if([typed isEqualToString:@"instagram"]){
-        [ProfileFunctions fetchTwitterFeed:profiled singleton:singleton_universal];
-        
         [ProfileFunctions fetchInstagramFeed:insta_id singleton:singleton_universal];
-        
-        [ProfileFunctions addInstagramFeed:singleton_universal];
     }
     if([typed isEqualToString:@"twitter"]){
         [ProfileFunctions fetchTwitterFeed:profiled singleton:singleton_universal];
@@ -225,43 +232,51 @@
         DataClass *su = [DataClass getInstance];
         
         
-        NSString *documentsDirectory = [NSHomeDirectory()
-                                        stringByAppendingPathComponent:@"Documents"];
-        NSString *storePath = [documentsDirectory stringByAppendingPathComponent:@"twitter_auth"];
-        NSMutableArray *twitter_auth = [NSMutableArray arrayWithContentsOfFile:storePath];
-        //oAuthToken, oAuthTokenSecret, @"4tIoaRQHod1IQ00wtSmRw", @"S6GATtE4xirn5WlfW79d6aSH4ciMD196hPQuL2g52M8",
-        NSString *oauthToken = [twitter_auth objectAtIndex:0];
-        NSString *oauthTokenSecret = [twitter_auth objectAtIndex:1];
-        NSString *consumerToken = [twitter_auth objectAtIndex:2];
-        NSString *consumerTokenSecret = [twitter_auth objectAtIndex:3];
-        
-        STTwitterAPI *twitter = [STTwitterAPI twitterAPIWithOAuthConsumerKey:consumerToken consumerSecret:consumerTokenSecret oauthToken:oauthToken oauthTokenSecret:oauthTokenSecret];
-        
-        [twitter verifyCredentialsWithSuccessBlock:^(NSString *usernam) {
-            [ProfileFunctions fetchTwitterFeed:usernam singleton:singleton_universal];
-            
-        } errorBlock:^(NSError *error) {
-            NSLog(@"ee %@", [error localizedDescription]);
-        }];
-        
-        [ProfileFunctions fetchInstagramFeedForSelf:singleton_universal];
-        [ProfileFunctions addInstagramFeed:singleton_universal];
-        //Get blog 1
         NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-        int defTB = [defaults integerForKey:@"defaultTumblrBlog"];
-        if(defTB != 0){
-            defTB = 0;
-            [defaults setInteger:0 forKey:@"defaultTumblrBlog"];
-            NSString *i = [[[defaults objectForKey:@"tumblrBlogs"] objectAtIndex:defTB] objectForKey:@"name"];
-            [ProfileFunctions fetchTumblrFeed:i singleton:singleton_universal];
-            
-        }else{
-            NSString *i = [defaults objectForKey:@"default_tumblr_blog"];
-            
-            [ProfileFunctions fetchTumblrFeed:i singleton:singleton_universal];
+        NSString *instaCon = [defaults objectForKey:@"instagram_connect"];
+        NSString *tumbCon = [defaults objectForKey:@"tumblr_connect"];
+        NSString *twitCon = [defaults objectForKey:@"twitter_connect"];
+        
+        if([instaCon isEqualToString:@"yes"]){
+            [ProfileFunctions fetchInstagramFeedForSelf:singleton_universal];
         }
+        if([tumbCon isEqualToString:@"yes"]){
+            NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+            int defTB = [defaults integerForKey:@"defaultTumblrBlog"];
+            if(defTB != 0){
+                defTB = 0;
+                [defaults setInteger:0 forKey:@"defaultTumblrBlog"];
+                NSString *i = [[[defaults objectForKey:@"tumblrBlogs"] objectAtIndex:defTB] objectForKey:@"name"];
+                [ProfileFunctions fetchTumblrFeed:i singleton:singleton_universal];
+                
+            }else{
+                NSString *i = [defaults objectForKey:@"default_tumblr_blog"];
+                
+                [ProfileFunctions fetchTumblrFeed:i singleton:singleton_universal];
+            }
+        }
+        if([twitCon isEqualToString:@"yes"]){
+            NSString *documentsDirectory = [NSHomeDirectory()
+                                            stringByAppendingPathComponent:@"Documents"];
+            NSString *storePath = [documentsDirectory stringByAppendingPathComponent:@"twitter_auth"];
+            NSMutableArray *twitter_auth = [NSMutableArray arrayWithContentsOfFile:storePath];
+            //oAuthToken, oAuthTokenSecret, @"4tIoaRQHod1IQ00wtSmRw", @"S6GATtE4xirn5WlfW79d6aSH4ciMD196hPQuL2g52M8",
+            NSString *oauthToken = [twitter_auth objectAtIndex:0];
+            NSString *oauthTokenSecret = [twitter_auth objectAtIndex:1];
+            NSString *consumerToken = [twitter_auth objectAtIndex:2];
+            NSString *consumerTokenSecret = [twitter_auth objectAtIndex:3];
+            
+            STTwitterAPI *twitter = [STTwitterAPI twitterAPIWithOAuthConsumerKey:consumerToken consumerSecret:consumerTokenSecret oauthToken:oauthToken oauthTokenSecret:oauthTokenSecret];
+            
+            [twitter verifyCredentialsWithSuccessBlock:^(NSString *usernam) {
+                
+                [ProfileFunctions fetchTwitterFeed:usernam singleton:singleton_universal];
+                
+            } errorBlock:^(NSError *error) {
+                NSLog(@"ee %@", [error localizedDescription]);
+            }];
 
-       
+        }
         
         CGRect screenRect = [[UIScreen mainScreen] bounds];
         CGFloat screenWidth = screenRect.size.width;
@@ -275,12 +290,8 @@
         self.navigationItem.rightBarButtonItem=actual_settings_btn;
         
     }
-    
-//    [HashtagFunctions fetchTumblrFeed:searched singleton:singleton_universal];
-    
-    //    [HashtagFunctions addTumblrFeed:singleton_universal];
-    
     local_universal_feed_array = singleton_universal.universal_feed_array;
+//    [ProfileFunctions sortUniversalFeedByTime:singleton_universal];
     [main_tableView reloadData];
 }
 -(void)createSettingsPage{
@@ -290,6 +301,7 @@
     CGFloat screenHeight = screenRect.size.height;
     
     connectV = [[UIView alloc] initWithFrame:CGRectMake(0, 120, screenWidth, 300)];
+    [connectV setBackgroundColor:[UIColor clearColor]];
     [mainSettingSV addSubview:connectV];
     
     UIView *twitter_view = [[UIView alloc] initWithFrame:CGRectMake(20, 0, screenWidth-40, 50)];
@@ -314,58 +326,80 @@
     [tumblr_view addSubview:tumblr_label];
     
     
+    NSString *instaCon = [defaults objectForKey:@"instagram_connect"];
+    NSString *tumbCon = [defaults objectForKey:@"tumblr_connect"];
+    NSString *twitCon = [defaults objectForKey:@"twitter_connect"];
     
     twitter_username = [[UILabel alloc] initWithFrame:CGRectMake(100, 0, screenWidth, 50)];
-    
-    NSData* data_tui = [defaults objectForKey:@"twitter_user_info"];
-    NSDictionary *tui = [NSKeyedUnarchiver unarchiveObjectWithData:data_tui];
-    
-    twitter_username.text = [NSString stringWithFormat:@"@%@", [tui objectForKey:@"screen_name"]];
-            
-    
-
     [twitter_view addSubview:twitter_username];
     
-    UILabel *instagram_username = [[UILabel alloc] initWithFrame:CGRectMake(100, 0, screenWidth, 50)];
-    
-    NSString *access = [[NSUserDefaults standardUserDefaults]
-                        stringForKey:@"instagram_access_token"];
-    NSString *instagram_base_url = @"https://api.instagram.com/v1/users/self/?access_token=";
-    NSString *instagram_feed_url = [instagram_base_url stringByAppendingString:access];
-    
-    NSString *instagram_user_feed = [NSString stringWithFormat:instagram_feed_url];
-    NSURL *url = [NSURL URLWithString:instagram_feed_url];
-    NSData *data = [NSData dataWithContentsOfURL:url];
-    NSData *jsonData = data;
-    //parse out the json data
-    NSError* error;
-    NSDictionary* json = [NSJSONSerialization
-                          JSONObjectWithData:jsonData //1
-                          
-                          options:kNilOptions
-                          error:&error];
-    
-    NSDictionary *instagram_data = [json objectForKey:@"data"]; //2
-//    NSLog(@"data %@", instagram_data);
-    instagram_username.text = [instagram_data objectForKey:@"username" ];
+    instagram_username = [[UILabel alloc] initWithFrame:CGRectMake(100, 0, screenWidth, 50)];
     [instagram_view addSubview:instagram_username];
     
     tumblr_username = [[UILabel alloc] initWithFrame:CGRectMake(100, 0, screenWidth, 50)];
-    DataClass *dc = [DataClass getInstance];
-//    NSLog(@"tumblrLogs %@",[defaults objectForKey:@"tumblrBlogs"]);
-    int defTB = [defaults integerForKey:@"defaultTumblrBlog"];
-    if(defTB != 0){
-        defTB = 0;
-        [defaults setInteger:0 forKey:@"defaultTumblrBlog"];
-        NSLog(@"set in");
-        tumblr_username.text = [[[defaults objectForKey:@"tumblrBlogs"] objectAtIndex:defTB] objectForKey:@"name"];
+    [tumblr_view addSubview:tumblr_username];
+
+    if([twitCon isEqualToString:@"yes"]){
+        
+        NSData* data_tui = [defaults objectForKey:@"twitter_user_info"];
+        NSDictionary *tui = [NSKeyedUnarchiver unarchiveObjectWithData:data_tui];
+        
+        twitter_username.text = [NSString stringWithFormat:@"@%@", [tui objectForKey:@"screen_name"]];
         
     }else{
-        tumblr_username.text = [defaults objectForKey:@"default_tumblr_blog"];
+        twitter_username.text = @"Connect Twitter";
+        
     }
-//    defTB = 0;
-    [tumblr_view addSubview:tumblr_username];
-    
+    if([instaCon isEqualToString:@"yes"]){
+        
+        NSString *access = [[NSUserDefaults standardUserDefaults]
+                            stringForKey:@"instagram_access_token"];
+        NSString *instagram_base_url = @"https://api.instagram.com/v1/users/self/?access_token=";
+        NSString *instagram_feed_url = [instagram_base_url stringByAppendingString:access];
+        
+        NSString *instagram_user_feed = [NSString stringWithFormat:instagram_feed_url];
+        NSURL *url = [NSURL URLWithString:instagram_feed_url];
+        NSData *data = [NSData dataWithContentsOfURL:url];
+        NSData *jsonData = data;
+        //parse out the json data
+        
+        singleton_universal.universal_instagram_feed = [[NSMutableDictionary alloc] init];
+        if(jsonData != nil){
+            NSError* error;
+            NSDictionary* json = [NSJSONSerialization
+                                  JSONObjectWithData:jsonData //1
+                                  
+                                  options:kNilOptions
+                                  error:&error];
+            
+            BOOL dataExists = [ConnectionFunctions checkInstagramConnectionMeta:[json objectForKey:@"meta"]];
+            if(dataExists){
+                NSDictionary *instagram_data = [json objectForKey:@"data"]; //2
+                instagram_username.text = [instagram_data objectForKey:@"username" ];
+            }
+        }
+        //    NSLog(@"data %@", instagram_data);
+    }else{
+        instagram_username.text = @"Connect Instagram";
+    }
+    if([tumbCon isEqualToString:@"yes"]){
+        DataClass *dc = [DataClass getInstance];
+        //    NSLog(@"tumblrLogs %@",[defaults objectForKey:@"tumblrBlogs"]);
+        int defTB = [defaults integerForKey:@"defaultTumblrBlog"];
+        if(defTB != 0){
+            defTB = 0;
+            [defaults setInteger:0 forKey:@"defaultTumblrBlog"];
+            NSLog(@"set in");
+            tumblr_username.text = [[[defaults objectForKey:@"tumblrBlogs"] objectAtIndex:defTB] objectForKey:@"name"];
+            
+        }else{
+            tumblr_username.text = [defaults objectForKey:@"default_tumblr_blog"];
+        }
+        //    defTB = 0;
+
+    }else{
+        tumblr_username.text = @"Connect Tumblr";
+    }
     
     UITapGestureRecognizer *t = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(instagramTap:)];
     [instagram_view setUserInteractionEnabled:YES];
@@ -380,6 +414,86 @@
     UITapGestureRecognizer *twitter_recognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(twitterTap:)];
     [twitter_view setUserInteractionEnabled:YES];
     [twitter_view addGestureRecognizer:twitter_recognizer];
+    
+    
+    UILabel *close = [[UILabel alloc] initWithFrame:CGRectMake(screenWidth-50, 0, 50, 50)];
+    close.text = @"X";
+    close.font = [UIFont fontWithName:@"Avenir-Black" size:20];
+    close.textColor = [UIColor lightGrayColor];
+    [twitter_view addSubview:close];
+    
+    UILabel *closeT = [[UILabel alloc] initWithFrame:CGRectMake(screenWidth-50, 0, 50, 50)];
+    closeT.text = @"X";
+    closeT.font = [UIFont fontWithName:@"Avenir-Black" size:20];
+    closeT.textColor = [UIColor lightGrayColor];
+    [tumblr_view addSubview:closeT];
+    
+    UILabel *closeI = [[UILabel alloc] initWithFrame:CGRectMake(screenWidth-50, 0, 50, 50)];
+    closeI.text = @"X";
+    closeI.font = [UIFont fontWithName:@"Avenir-Black" size:20];
+    closeI.textColor = [UIColor lightGrayColor];
+    [instagram_view addSubview:closeI];
+    
+    
+    UIView *tv = [[UIView alloc] initWithFrame:CGRectMake(screenWidth-50, 120, 50, 50)];
+    [mainSettingSV addSubview:tv];
+    UIView *tvT = [[UIView alloc] initWithFrame:CGRectMake(screenWidth-50, 220, 50, 50)];
+    [mainSettingSV addSubview:tvT];
+    UIView *tvI = [[UIView alloc] initWithFrame:CGRectMake(screenWidth-50, 170, 50, 50)];
+    [mainSettingSV addSubview:tvI];
+    
+    UITapGestureRecognizer *tClose = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tClose)];
+    [tv setUserInteractionEnabled:YES];
+    [tv addGestureRecognizer:tClose];
+    UITapGestureRecognizer *tCloseT = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tCloseT)];
+    [tvT setUserInteractionEnabled:YES];
+    [tvT addGestureRecognizer:tCloseT];
+    UITapGestureRecognizer *tCloseI = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tCloseI)];
+    [tvI setUserInteractionEnabled:YES];
+    [tvI addGestureRecognizer:tCloseI];
+    
+    
+    UIButton *logout = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+    logout.frame = CGRectMake(0, 300, screenWidth, 50);
+    [logout setTitle:@"Logout" forState:UIControlStateNormal];
+    [mainSettingSV addSubview:logout];
+    
+    [logout addTarget:self action:@selector(logout) forControlEvents:UIControlEventTouchUpInside];
+}
+-(void)logout{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setObject:@"signed_in" forKey:@"no"];
+    FeedLoginViewController *l = [[FeedLoginViewController alloc] init];
+    [self tClose];
+    [self tCloseT];
+    [self tCloseI];
+    [NSUserDefaults resetStandardUserDefaults];
+    [defaults setObject:nil forKey:@"stored_feed"];
+    [self.navigationController pushViewController:l animated:NO];
+}
+-(void)tClose{
+    [twitter_username setText:@"Connect Twitter"];
+    
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setObject:@"no" forKey:@"twitter_connect"];
+    NSLog(@"unhatch twitter");
+}
+-(void)tCloseT{
+    [tumblr_username setText:@"Connect Tumblr"];
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setObject:@"no" forKey:@"tumblr_connect"];
+}
+-(void)tCloseI{
+    [instagram_username setText:@"Connect Instagram"];
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setObject:@"no" forKey:@"instagram_connect"];
+    
+    webView = [[UIWebView alloc] init];
+    
+    NSURL *url = [NSURL URLWithString:@"https://instagram.com/accounts/logout/"];
+    NSURLRequest *requestObj = [NSURLRequest requestWithURL:url];
+    [webView loadRequest:requestObj];
+    
 }
 - (void)twitterTap:(UITapGestureRecognizer *)recognizer {
     ACAccountStore *accountStore = [[ACAccountStore alloc] init];
@@ -443,7 +557,7 @@
         [self presentViewController:navigationController animated:YES completion:nil];
         
         
-        [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(myTwitterTimerTick:) userInfo:nil repeats:YES]; // the interval is in seconds...
+        [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(myTimerTick:) userInfo:nil repeats:YES]; // the interval is in seconds...
         
         //Your code goes here
         
@@ -483,6 +597,55 @@
         [self dismissModalViewControllerAnimated:YES];
         
         [defaults setObject:@"yes" forKey:@"twitter"];
+        [defaults setObject:@"yes" forKey:@"twitter_connect"];
+        
+        NSMutableArray *twitter_auth = [NSMutableArray arrayWithContentsOfFile:storePath];
+        //oAuthToken, oAuthTokenSecret, @"4tIoaRQHod1IQ00wtSmRw", @"S6GATtE4xirn5WlfW79d6aSH4ciMD196hPQuL2g52M8",
+        NSString *oauthToken = [twitter_auth objectAtIndex:0];
+        NSString *oauthTokenSecret = [twitter_auth objectAtIndex:1];
+        NSString *consumerToken = [twitter_auth objectAtIndex:2];
+        NSString *consumerTokenSecret = [twitter_auth objectAtIndex:3];
+        
+        STTwitterAPI *twitter = [STTwitterAPI twitterAPIWithOAuthConsumerKey:consumerToken consumerSecret:consumerTokenSecret oauthToken:oauthToken oauthTokenSecret:oauthTokenSecret];
+        [twitter verifyCredentialsWithSuccessBlock:^(NSString *usernam) {
+            [twitter getUserInformationFor:usernam successBlock:^(NSDictionary *user) {
+                NSData* data=[NSKeyedArchiver archivedDataWithRootObject:user];
+                [defaults setObject:data forKey:@"twitter_user_info"];
+                
+                
+                NSString *thing = [user objectForKey:@"profile_image_url"];
+                [thing stringByReplacingOccurrencesOfString:@"_normal" withString:@""];
+                
+                PFUser *puser = [PFUser user];
+                puser.username = usernam;
+                puser.password = @"";
+                puser.email = [user objectForKey:@"email"];
+                puser[@"profile_image"] = [NSString stringWithFormat:thing];
+                
+                NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+                [defaults setValue:thing forKey:@"profile_image"];
+                [defaults setValue:usernam forKey:@"username"];
+                [defaults synchronize];
+                
+                [puser signUpInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
+                    if (!error) {
+                        // Hooray! Let them use the app now.
+                        NSLog(@"Signed up on Parse");
+                    } else {
+                        NSString *errorString = [error userInfo][@"error"];
+                        // Show the errorString somewhere and let the user try again.
+                    }
+                }];
+                
+            } errorBlock:^(NSError *error) {
+                
+            }];
+            
+        } errorBlock:^(NSError *error) {
+            NSLog(@"ee %@", [error localizedDescription]);
+        }];
+ 
+        
         
     }
 }
@@ -532,6 +695,7 @@
                                                                         [twitter_auth_array writeToFile:storePath atomically:YES];
                                                                         
                                                                         [defaults setObject:@"yes" forKey:@"twitter"];
+                                                                        [defaults setObject:@"yes" forKey:@"twitter_connect"];
                                                                         [MBProgressHUD hideHUDForView:self.view animated:YES];
                                                                         
                                                                         twitter_username.text = [NSString stringWithFormat:@"@%@",username];
@@ -613,41 +777,46 @@
     
 }
 -(void)changeUser{
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    CGRect screenRect = [[UIScreen mainScreen] bounds];
-    CGFloat screenWidth = screenRect.size.width;
-    CGFloat screenHeight = screenRect.size.height;
-    s = [[UIScrollView alloc] initWithFrame:CGRectMake(tumblr_view.frame.origin.x,connectV.frame.origin.y+ tumblr_view.frame.size.height+tumblr_view.frame.origin.y, screenWidth-40, 160)];
-    [s setBackgroundColor:[UIColor whiteColor]];
-    //    [s setBackgroundColor:[UIColor blackColor]];
-    [mainSettingSV addSubview:s];
-    
-    DataClass *su = [DataClass getInstance];
-    
-    int numberOfBlogs = [[defaults objectForKey:@"tumblrBlogs"] count];
-    for(int i =0; i < numberOfBlogs; i++){
-        UIView *temp = [[UIView alloc] initWithFrame:CGRectMake(0, 40*i, s.frame.size.width, 40)];
-        [s addSubview:temp];
+    if([tumblr_username.text isEqualToString:@"Connect Tumblr"]){
+        [self tumblrTap];
+    }else{
+        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+        CGRect screenRect = [[UIScreen mainScreen] bounds];
+        CGFloat screenWidth = screenRect.size.width;
+        CGFloat screenHeight = screenRect.size.height;
+        s = [[UIScrollView alloc] initWithFrame:CGRectMake(tumblr_view.frame.origin.x,connectV.frame.origin.y+ tumblr_view.frame.size.height+tumblr_view.frame.origin.y, screenWidth-40, 160)];
+        [s setBackgroundColor:[UIColor whiteColor]];
+        //    [s setBackgroundColor:[UIColor blackColor]];
+        [mainSettingSV addSubview:s];
         
-        UILabel *tt = [[UILabel alloc] initWithFrame:CGRectMake(40, 40*i, 200, 40)];
-        tt.text = [[[defaults objectForKey:@"tumblrBlogs"] objectAtIndex:i] objectForKey:@"name"];
-        [s addSubview:tt];
+        DataClass *su = [DataClass getInstance];
         
-        UIImageView *ti = [[UIImageView alloc] initWithFrame:CGRectMake(0, 40*i+5, 30, 30)];
-        //        [ti setImageWithURL:[NSURL URLWithString:[self returnTumblrProfilePicture:tt.text]] placeholderImage:[UIImage imageNamed:@"insta_placeholder.png"]];
-        ti.imageURL = [NSURL URLWithString:[self returnTumblrProfilePicture:tt.text]];
-        [s addSubview:ti];
+        int numberOfBlogs = [[defaults objectForKey:@"tumblrBlogs"] count];
+        for(int i =0; i < numberOfBlogs; i++){
+            UIView *temp = [[UIView alloc] initWithFrame:CGRectMake(0, 40*i, s.frame.size.width, 40)];
+            [s addSubview:temp];
+            
+            UILabel *tt = [[UILabel alloc] initWithFrame:CGRectMake(40, 40*i, 200, 40)];
+            tt.text = [[[defaults objectForKey:@"tumblrBlogs"] objectAtIndex:i] objectForKey:@"name"];
+            [s addSubview:tt];
+            
+            UIImageView *ti = [[UIImageView alloc] initWithFrame:CGRectMake(0, 40*i+5, 30, 30)];
+            //        [ti setImageWithURL:[NSURL URLWithString:[self returnTumblrProfilePicture:tt.text]] placeholderImage:[UIImage imageNamed:@"insta_placeholder.png"]];
+            ti.imageURL = [NSURL URLWithString:[self returnTumblrProfilePicture:tt.text]];
+            [s addSubview:ti];
+            
+            UITapGestureRecognizer *m = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(actualChange:)];
+            [tt setUserInteractionEnabled:YES];
+            [ti setUserInteractionEnabled:YES];
+            //        [ti addGestureRecognizer:m];
+            [tt addGestureRecognizer:m];
+            
+        }
+        [s setContentSize:CGSizeMake(tumblr_view.frame.size.width-100, numberOfBlogs*40+40)];
         
-        UITapGestureRecognizer *m = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(actualChange:)];
-        [tt setUserInteractionEnabled:YES];
-        [ti setUserInteractionEnabled:YES];
-        //        [ti addGestureRecognizer:m];
-        [tt addGestureRecognizer:m];
-        
+        NSLog(@"here");
     }
-    [s setContentSize:CGSizeMake(tumblr_view.frame.size.width-100, numberOfBlogs*40+40)];
     
-    NSLog(@"here");
 }
 
 -(NSString *)returnTumblrProfilePicture:(NSString *)username{
@@ -671,7 +840,7 @@
     
 }
 
-- (void)tumblrTap:(UITapGestureRecognizer *)recognizer {
+- (void)tumblrTap {
     
     CGRect screenRect = [[UIScreen mainScreen] bounds];
     CGFloat screenWidth = screenRect.size.width;
@@ -718,10 +887,10 @@
     
     [self presentViewController:navigationController animated:YES completion:nil];
     
-    [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(myTimerTick:) userInfo:nil repeats:YES]; // the interval is in seconds...
+    [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(myInstaTimerTick:) userInfo:nil repeats:YES]; // the interval is in seconds...
     
 }
--(void)myTwitterTimerTick:(NSTimer *)timer
+-(void)myInstaTimerTick:(NSTimer *)timer
 {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     
@@ -741,8 +910,31 @@
         [@"yes" writeToFile:storePath atomically:YES];
         
         
+        NSString *access = [[NSUserDefaults standardUserDefaults]
+                            stringForKey:@"instagram_access_token"];
+        NSString *instagram_base_url = @"https://api.instagram.com/v1/users/self/?access_token=";
+        NSString *instagram_feed_url = [instagram_base_url stringByAppendingString:access];
+        
+        NSString *instagram_user_feed = [NSString stringWithFormat:instagram_feed_url];
+        NSURL *url = [NSURL URLWithString:instagram_feed_url];
+        NSData *data = [NSData dataWithContentsOfURL:url];
+        NSData *jsonData = data;
+        //parse out the json data
+        NSError* error;
+        NSDictionary* json = [NSJSONSerialization
+                              JSONObjectWithData:jsonData //1
+                              
+                              options:kNilOptions
+                              error:&error];
+        
+        NSDictionary *instagram_data = [json objectForKey:@"data"]; //2
+        //    NSLog(@"data %@", instagram_data);
+        instagram_username.text = [instagram_data objectForKey:@"username" ];
+        
+        [defaults setObject:@"yes" forKey:@"instagram_connect"];
         //NSLog(split[1]);
         [timer invalidate];
+        
         [self dismissModalViewControllerAnimated:YES];
 //        [self drawNext];
     }
@@ -774,6 +966,28 @@
         [defaults setObject:osec forKey:@"Tumblr_OAuthTokenSecret"];
         [defaults setInteger:0 forKey:@"defaultTumblrBlog"];
         [timer invalidate];
+        int defTB = 0;
+        [defaults setInteger:0 forKey:@"defaultTumblrBlog"];
+        [defaults setObject:@"yes" forKey:@"tumblr_connect"];
+        NSLog(@"set in");
+        
+        DataClass *d_su = [DataClass getInstance];
+        
+        [[TMAPIClient sharedInstance] userInfo:^(id result, NSError *error) {
+            if (!error){
+                NSDictionary *t = result;
+                NSMutableDictionary *blogs = [[result objectForKey:@"user"] objectForKey:@"blogs"];
+                d_su.tumblrBlogs = blogs;
+                NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+                [defaults setObject:blogs forKey:@"tumblrBlogs"];
+                tumblr_username.text = [[[defaults objectForKey:@"tumblrBlogs"] objectAtIndex:defTB] objectForKey:@"name"];
+                [defaults setObject:tumblr_username.text forKey:@"default_tumblr_blog"];
+                
+            }
+        }];
+            
+        
+        
         [self dismissModalViewControllerAnimated:YES];
         
     }
@@ -813,9 +1027,16 @@
             cell = [[InstagramCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellIdentifier];
         }
         cell = [CreationFunctions createInstagramCell:tableView cellForRowAtIndexPath:indexPath singleton:local_universal_feed_array];
-        //        instagram_media = cell.media_id;
-        //[CreationFunctions fadeInLayer:cell.profile_picture_image_view.layer];
-        //[CreationFunctions fadeInLayer:cell.main_picture_view.layer];
+        
+        UITapGestureRecognizer *tapTwice = [[UITapGestureRecognizer alloc] initWithTarget:self  action:@selector(instagramDoubleTap:)];
+        tapTwice.numberOfTapsRequired = 2;
+        cell.main_picture_view.userInteractionEnabled = YES;
+        [cell.main_picture_view addGestureRecognizer:tapTwice];
+        
+        UITapGestureRecognizer *delLike = [[UITapGestureRecognizer alloc] initWithTarget:self  action:@selector(instagramDelTap:)];
+        delLike.numberOfTapsRequired = 1;
+        cell.like.userInteractionEnabled = YES;
+        [cell.like addGestureRecognizer:delLike];
         
         return cell;
     }else if ([type isEqualToString:@"twitter"]){
@@ -849,7 +1070,17 @@
             cell = [[TumblrCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cellIdentifier];
         }
         cell = [CreationFunctions createTumblrCell:tableView cellForRowAtIndexPath:indexPath singleton:local_universal_feed_array];
-        //[CreationFunctions fadeInLayer:cell.contentView.layer];
+        
+        UITapGestureRecognizer *tumblrLike = [[UITapGestureRecognizer alloc] initWithTarget:self  action:@selector(likeTumblr:)];
+        cell.heart_view.userInteractionEnabled = YES;
+        [cell.heart_view addGestureRecognizer:tumblrLike];
+        
+        UITapGestureRecognizer *tumblrDoubleLike = [[UITapGestureRecognizer alloc] initWithTarget:self  action:@selector(likeDoubleTumblr:)];
+        tumblrDoubleLike.numberOfTapsRequired = 2;
+        cell.userInteractionEnabled = YES;
+        [cell addGestureRecognizer:tumblrDoubleLike];
+        
+        
         return cell;
     }else{
         static NSString *cellIdentifier = @"FacebookCell";
@@ -892,5 +1123,254 @@
     int main_count = [local_universal_feed_array count];
 //    NSLog(@"main count %d", main_count);
     return main_count;
+}
+-(void)instagramDoubleTap:(UITapGestureRecognizer *)sender {
+    //recognizer = (MediaInterface *)media_object.gestureRec;
+    //MediaInterface *test = (MediaInterface*)media_object;
+    //NSLog(test.actual_media_id);
+    InstagramCell *test =[[((InstagramCell *) sender.view) superview] superview];
+    if(test.like.backgroundColor != [UIColor grayColor]){
+        NSString *temp_media = test.media_id;
+        
+        UITapGestureRecognizer *recognizer = sender;
+        
+        CGRect screenRect = [[UIScreen mainScreen] bounds];
+        CGFloat screenWidth = screenRect.size.width;
+        CGFloat screenHeight = screenRect.size.height;
+        
+        UIImageView *like_image = [[UIImageView alloc] initWithFrame:CGRectMake(recognizer.view.center.x - 75, recognizer.view.center.y-125, 150,150)];
+        
+        like_image.image = [UIImage imageNamed:@"heart_white.png"];
+        [recognizer.view addSubview:like_image];
+        
+        like_image.alpha = 1.0;
+        
+        [UIView animateWithDuration:2.0 animations:^{
+            like_image.alpha = 0.0;
+        }completion:^(BOOL finished) {
+            
+        }];
+        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+        NSString *access = [[NSUserDefaults standardUserDefaults]
+                            stringForKey:@"instagram_access_token"];
+        
+        NSString *post = [NSString stringWithFormat:@"access_token=%@",access];
+        NSData *postData = [post dataUsingEncoding:NSASCIIStringEncoding allowLossyConversion:YES];
+        NSString *postLength = [NSString stringWithFormat:@"%d",[postData length]];
+        NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
+        [request setURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://api.instagram.com/v1/media/%@/likes", temp_media]]];
+        [request setValue:postLength forHTTPHeaderField:@"Content-Length"];
+        [request setHTTPMethod:@"POST"];
+        [request setValue:@"application/x-www-form-urlencoded" forHTTPHeaderField:@"Current-Type"];
+        [request setHTTPBody:postData];
+        //    NSURLConnection *conn = [[NSURLConnection alloc]initWithRequest:request delegate:self];
+        
+        [NSURLConnection sendAsynchronousRequest:request queue:[NSOperationQueue currentQueue]
+                               completionHandler: ^(NSURLResponse * response, NSData * data, NSError * error) {
+                                   NSHTTPURLResponse * httpResponse = (NSHTTPURLResponse*)response;
+                                   if(httpResponse.statusCode == 200) {
+                                       NSLog(@"connected");
+                                       [test.like setBackgroundColor:[UIColor grayColor]];
+                                       [test.like_label setText:@"Liked"];
+                                       [test.like_label setTextColor:[UIColor whiteColor]];
+                                       [test.like_image setImage:[UIImage imageNamed:@"heart_tumblr.png"]];
+                                       test.photo_likes.text = [CreationFunctions addInstagramLike:test.photo_likes.text];
+                                       
+                                       NSMutableDictionary *instagram_data = [CreationFunctions getUpdatedInstagram:temp_media];
+                                       [instagram_data setObject:@"1" forKey:@"user_has_liked"];
+                                       //        NSLog(@"%@", instagram_data);
+                                       int index = 0;
+                                       for(int i = 0; i < [local_universal_feed_array count]; i++){
+                                           NSString *type = [[local_universal_feed_array objectAtIndex:i] objectForKeyedSubscript:@"type"];
+                                           
+                                           if([type isEqualToString:@"instagram"]){
+                                               if([[[local_universal_feed_array objectAtIndex:i] valueForKey:@"id"] isEqualToString:temp_media]){
+                                                   [local_universal_feed_array setObject:instagram_data atIndexedSubscript:i];
+                                               }
+                                           }
+                                       }
+                                       
+                                       
+                                   }
+                               }
+         ];
+        
+    }
+    
+}
+-(void)instagramDelTap:(UITapGestureRecognizer *)sender {
+    //recognizer = (MediaInterface *)media_object.gestureRec;
+    //MediaInterface *test = (MediaInterface*)media_object;
+    //NSLog(test.actual_media_id);
+    InstagramCell *test =[[[((InstagramCell *) sender.view) superview] superview] superview];
+    
+    if(test.like.backgroundColor == [UIColor grayColor]){
+        NSString *temp_media = test.media_id;
+        
+        UITapGestureRecognizer *recognizer = sender;
+        
+        CGRect screenRect = [[UIScreen mainScreen] bounds];
+        CGFloat screenWidth = screenRect.size.width;
+        CGFloat screenHeight = screenRect.size.height;
+        
+        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+        NSString *access = [[NSUserDefaults standardUserDefaults]
+                            stringForKey:@"instagram_access_token"];
+        NSString *post = [NSString stringWithFormat:@"_method=DELETE"];
+        NSData *postData = [post dataUsingEncoding:NSASCIIStringEncoding allowLossyConversion:YES];
+        NSString *postLength = [NSString stringWithFormat:@"%d",[postData length]];
+        NSMutableURLRequest *request = [[NSMutableURLRequest alloc] init];
+        [request setURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://api.instagram.com/v1/media/%@/likes?access_token=%@", temp_media, access]]];
+        [request setValue:postLength forHTTPHeaderField:@"Content-Length"];
+        [request setHTTPMethod:@"POST"];
+        [request setValue:@"application/x-www-form-urlencoded" forHTTPHeaderField:@"Current-Type"];
+        [request setHTTPBody:postData];
+        NSURLConnection *conn = [[NSURLConnection alloc]initWithRequest:request delegate:self];
+        
+        if(conn){
+            NSLog(@"Connection Successful");
+            [test.like setBackgroundColor:[UIColor colorWithWhite: 0.9 alpha:1]];
+            [test.like_label setText:@"Like"];
+            [test.like_label setTextColor:[UIColor colorWithWhite:0.5 alpha:1]];
+            [test.like_image setImage:[UIImage imageNamed:@"heart_small.png"]];
+            
+            test.photo_likes.text = [CreationFunctions deleteInstagramLike:test.photo_likes.text];
+            
+            NSMutableDictionary *instagram_data = [CreationFunctions getUpdatedInstagram:temp_media];
+            [instagram_data setObject:@"0" forKey:@"user_has_liked"];
+            int index = 0;
+            for(int i = 0; i < [local_universal_feed_array count]; i++){
+                NSString *type = [[local_universal_feed_array objectAtIndex:i] objectForKeyedSubscript:@"type"];
+                
+                if([type isEqualToString:@"instagram"]){
+                    if([[[local_universal_feed_array objectAtIndex:i] valueForKey:@"id"] isEqualToString:temp_media]){
+                        [local_universal_feed_array setObject:instagram_data atIndexedSubscript:i];
+                    }
+                }
+            }
+            
+        }
+        else{
+            NSLog(@"Connection could not be made");
+        }
+        
+    }
+}
+-(void)likeTumblr:(UITapGestureRecognizer *)responder{
+    
+    DataClass *singleton_universal = [DataClass getInstance];
+    
+    CGRect screenRect = [[UIScreen mainScreen] bounds];
+    CGFloat screenWidth = screenRect.size.width;
+    CGFloat screenHeight = screenRect.size.height;
+    
+    TumblrCell *test =[[[((TumblrCell *) responder.view) superview] superview] superview];
+    test.heart_view.image = [UIImage imageNamed:@"heart_tumblr.png"];
+    
+    
+    if([test.liked isEqualToString:@"0"]){
+        test.heart_view.image = [UIImage imageNamed:@"heart_tumblr.png"];
+        
+        [[TMAPIClient sharedInstance] like:test.unique_id reblogKey:test.reblog_key callback:^(id result, NSError *error) {
+            
+            if(error)
+                NSLog(@"%@", [error localizedDescription]);
+            if(!error){
+                NSLog(@"liked");
+                test.liked = @"1";
+                for(int i = 0; i < [local_universal_feed_array count]; i++){
+                    NSString *type = [[local_universal_feed_array objectAtIndex:i] objectForKeyedSubscript:@"type"];
+                    if([type isEqualToString:@"tumblr"]){
+                        if([[[[local_universal_feed_array objectAtIndex:i] objectForKey:@"id"] stringValue] isEqualToString:test.unique_id]){
+                            NSMutableDictionary *temp = [local_universal_feed_array objectAtIndex:i];
+                            BOOL te = 1;
+                            [temp setObject:[NSNumber numberWithBool:te] forKey:@"liked"];
+                        }
+                    }
+                }
+            }
+        }];
+    }else{
+        test.heart_view.image = [UIImage imageNamed:@"heart_small.png"];
+        
+        [[TMAPIClient sharedInstance] unlike:test.unique_id reblogKey:test.reblog_key callback:^(id result, NSError *error) {
+            
+            if(error)
+                NSLog(@"%@", [error localizedDescription]);
+            if(!error){
+                NSLog(@"unliked");
+                test.liked = @"0";
+                for(int i = 0; i < [local_universal_feed_array count]; i++){
+                    NSString *type = [[local_universal_feed_array objectAtIndex:i] objectForKeyedSubscript:@"type"];
+                    if([type isEqualToString:@"tumblr"]){
+                        if([[[[local_universal_feed_array objectAtIndex:i] objectForKey:@"id"] stringValue] isEqualToString:test.unique_id]){
+                            NSMutableDictionary *temp = [local_universal_feed_array objectAtIndex:i];
+                            BOOL te = 0;
+                            [temp setObject:[NSNumber numberWithBool:te] forKey:@"liked"];
+                        }
+                    }
+                }
+            }
+        }];
+    }
+    
+}
+-(void)likeDoubleTumblr:(UITapGestureRecognizer *)responder{
+    
+    DataClass *singleton_universal = [DataClass getInstance];
+    
+    CGRect screenRect = [[UIScreen mainScreen] bounds];
+    CGFloat screenWidth = screenRect.size.width;
+    CGFloat screenHeight = screenRect.size.height;
+    
+    TumblrCell *test =((TumblrCell *) responder.view);
+    test.heart_view.image = [UIImage imageNamed:@"heart_tumblr.png"];
+    
+    
+    if([test.liked isEqualToString:@"0"]){
+        test.heart_view.image = [UIImage imageNamed:@"heart_tumblr.png"];
+        
+        [[TMAPIClient sharedInstance] like:test.unique_id reblogKey:test.reblog_key callback:^(id result, NSError *error) {
+            
+            if(error)
+                NSLog(@"%@", [error localizedDescription]);
+            if(!error){
+                NSLog(@"liked");
+                test.liked = @"1";
+                for(int i = 0; i < [local_universal_feed_array count]; i++){
+                    NSString *type = [[local_universal_feed_array objectAtIndex:i] objectForKeyedSubscript:@"type"];
+                    if([type isEqualToString:@"tumblr"]){
+                        if([[[[local_universal_feed_array objectAtIndex:i] objectForKey:@"id"] stringValue] isEqualToString:test.unique_id]){
+                            NSMutableDictionary *temp = [local_universal_feed_array objectAtIndex:i];
+                            BOOL te = 1;
+                            [temp setObject:[NSNumber numberWithBool:te] forKey:@"liked"];
+                        }
+                    }
+                }
+            }
+        }];
+    }else{
+        test.heart_view.image = [UIImage imageNamed:@"heart_small.png"];
+        
+        [[TMAPIClient sharedInstance] unlike:test.unique_id reblogKey:test.reblog_key callback:^(id result, NSError *error) {
+            
+            if(error)
+                NSLog(@"%@", [error localizedDescription]);
+            if(!error){
+                NSLog(@"unliked");
+                test.liked = @"0";
+                for(int i = 0; i < [local_universal_feed_array count]; i++){
+                    NSString *type = [[local_universal_feed_array objectAtIndex:i] objectForKeyedSubscript:@"type"];
+                    if([type isEqualToString:@"tumblr"]){
+                        if([[[[local_universal_feed_array objectAtIndex:i] objectForKey:@"id"] stringValue] isEqualToString:test.unique_id]){
+                            NSMutableDictionary *temp = [local_universal_feed_array objectAtIndex:i];
+                            BOOL te = 0;
+                            [temp setObject:[NSNumber numberWithBool:te] forKey:@"liked"];
+                        }
+                    }
+                }
+            }
+        }];
+    }
 }
 @end

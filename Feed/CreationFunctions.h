@@ -61,4 +61,8 @@
 
 
 +(void)fetchInstagramLikes:(DataClass *)singleton_universal;
++(NSMutableDictionary *)getUpdatedInstagram:(NSString *)mediaID;
+
++(NSString *)addInstagramLike:(NSString *)text;
++(NSString *)deleteInstagramLike:(NSString *)text;
 @end

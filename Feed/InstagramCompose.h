@@ -12,4 +12,5 @@
 @property (strong, nonatomic)UITextView *mainContent;
 @property (strong, nonatomic) UITextView *mainImage;
 -(void)createImageWithImage:(UIImage *)smallImage;
+@property (nonatomic, retain) UIDocumentInteractionController *dic;  
 @end

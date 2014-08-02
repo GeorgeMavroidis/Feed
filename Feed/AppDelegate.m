@@ -15,7 +15,7 @@
 #import <TMAPIClient.h>
 #import "FeedMainViewController.h"
 #import "NewConnectView.h"
-
+#import "GAI.h"
 
 @implementation AppDelegate{
     UINavigationController *mainNavController;
@@ -45,6 +45,17 @@ static NSString * const kClientId = @"1067683679558-8870rh1fl1d8hi1sjd6neeecgjtq
     [PFTwitterUtils initializeWithConsumerKey:@"4tIoaRQHod1IQ00wtSmRw"
                                consumerSecret:@"S6GATtE4xirn5WlfW79d6aSH4ciMD196hPQuL2g52M8"];
     
+    [GAI sharedInstance].trackUncaughtExceptions = YES;
+    
+    // Optional: set Google Analytics dispatch interval to e.g. 20 seconds.
+    [GAI sharedInstance].dispatchInterval = 20;
+    
+    // Optional: set Logger to VERBOSE for debug information.
+    [[[GAI sharedInstance] logger] setLogLevel:kGAILogLevelVerbose];
+    
+    // Initialize tracker. Replace with your tracking ID.
+    [[GAI sharedInstance] trackerWithTrackingId:@"UA-33179700-4"];
+    
     NSString *documentsDirectory = [NSHomeDirectory()
                                     stringByAppendingPathComponent:@"Documents"];
     NSString *schedule_path = [documentsDirectory
@@ -54,9 +65,16 @@ static NSString * const kClientId = @"1067683679558-8870rh1fl1d8hi1sjd6neeecgjtq
                                                     error:NULL];
     check_facebook = @"no";
 //    check_facebook = @"yes";
-    if([[defaults objectForKey:@"twitter"] isEqualToString:@"yes"]){
+    
+    NSString *instaCon = [defaults objectForKey:@"instagram_connect"];
+    NSString *tumbCon = [defaults objectForKey:@"tumblr_connect"];
+    NSString *twitCon = [defaults objectForKey:@"twitter_connect"];
+    
+    if([twitCon isEqualToString:@"yes"] || [tumbCon isEqualToString:@"yes"] || [instaCon isEqualToString:@"yes"]){
         
         FeedMainViewController *connect = [[FeedMainViewController alloc] init];
+//        FeedConnectViewController *connect = [[FeedConnectViewController alloc]  init];
+//        FeedLoginViewController *connect = [[FeedLoginViewController alloc] init];
 //        NewConnectView *connect = [[NewConnectView alloc] init];
         [connect.navigationController.navigationItem hidesBackButton];
         mainNavController = [[UINavigationController alloc] initWithRootViewController:connect];

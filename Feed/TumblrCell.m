@@ -9,7 +9,7 @@
 #import "TumblrCell.h"
 
 @implementation TumblrCell
-@synthesize contentView, textView, tagView, interactView, profile_image_view, username, notes_label, reblog_view, unique_id, reblog_key, share_view, heart_view;
+@synthesize contentView, textView, tagView, interactView, profile_image_view, username, notes_label, reblog_view, unique_id, reblog_key, share_view, heart_view, liked, post_url;
 - (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
 {
     self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
@@ -17,6 +17,8 @@
         unique_id = @"";
         reblog_key = @"";
         
+        liked = @"";
+        post_url=@"";
         CGRect screenRect = [[UIScreen mainScreen] bounds];
         CGFloat screenWidth = screenRect.size.width;
         CGFloat screenHeight = screenRect.size.height;

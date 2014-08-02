@@ -84,14 +84,15 @@
     post.userInteractionEnabled = YES;
     
     mainComposeScrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(0,0, screenWidth, screenHeight)];
-    [mainComposeScrollView setContentSize:CGSizeMake(mainComposeScrollView.bounds.size.width, mainComposeScrollView.bounds.size.height+5)];
+    mainComposeScrollView.delegate = self;
+    [mainComposeScrollView setContentSize:CGSizeMake(mainComposeScrollView.bounds.size.width, screenHeight+5)];
     [mainComposeScrollView setShowsVerticalScrollIndicator:NO];
     mainComposeScrollView.keyboardDismissMode = UIScrollViewKeyboardDismissModeInteractive;
     [self.view addSubview:mainComposeScrollView];
     mainComposeScrollView.delegate = self;
     socialScrollView.delegate = self;
     
-    socialScrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(0, 0, screenWidth, screenHeight)];
+    socialScrollView = [[UIScrollView alloc] initWithFrame:CGRectMake(0, 0, screenWidth, screenHeight/2+screenHeight)];
     [mainComposeScrollView addSubview:socialScrollView];
     socialScrollView.contentSize = CGSizeMake(screenWidth, screenHeight);
     socialScrollView.pagingEnabled = YES;
@@ -166,7 +167,7 @@
     facebook_icon = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"facebook_a6a6a6_100.png"]];
     facebook_icon.frame = CGRectMake(social_footer_width/2-12, 0, 25, 25);
     [facebookG addSubview:facebook_icon];
-    [social_footer addSubview:facebookG];
+//    [social_footer addSubview:facebookG];
     [facebookG addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(facebookCreateCompose:)]];
     
     UIView *twitterG = [[UIView alloc] initWithFrame:CGRectMake(social_footer_width, 5, social_footer_width, 30)];
@@ -218,27 +219,48 @@
     facebook_icon.image = [UIImage imageNamed:@"facebook_000000_100.png"];
 }
 -(IBAction)twitterCreateCompose:(id)sender{
-    [mainContent resignFirstResponder];
-    CGRect screenRect = [[UIScreen mainScreen] bounds];
-    CGFloat screenWidth = screenRect.size.width;
-    CGFloat screenHeight = screenRect.size.height;
-    
-    twitter_icon.image = [UIImage imageNamed:@"twitter_000000_100.png"];
-    TwitterCompose *twitterScroll = [[TwitterCompose alloc]init];
-    twitterScroll.view.frame = CGRectMake(socialScrollView.contentSize.width, 0, screenWidth, screenHeight);
-    twitterScroll.mainContent.text = mainContent.text;
-
-    if(m != nil || m.alpha!=0){
-        [twitterScroll createImageWithImage:imageSelected.image];
+    NSUserDefaults *d = [NSUserDefaults standardUserDefaults];
+    NSString *t = [d objectForKey:@"twitter_connect"];
+    if([t isEqualToString:@"no"]){
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Connection"
+                                                        message:@"Connect a Twitter account from the settings page (on your profile)"
+                                                       delegate:nil
+                                              cancelButtonTitle:@"OK"
+                                              otherButtonTitles:nil];
+        [alert show];
+    }else{
+        [mainContent resignFirstResponder];
+        CGRect screenRect = [[UIScreen mainScreen] bounds];
+        CGFloat screenWidth = screenRect.size.width;
+        CGFloat screenHeight = screenRect.size.height;
+        
+        twitter_icon.image = [UIImage imageNamed:@"twitter_000000_100.png"];
+        TwitterCompose *twitterScroll = [[TwitterCompose alloc]init];
+        twitterScroll.view.frame = CGRectMake(socialScrollView.contentSize.width, 0, screenWidth, screenHeight);
+        twitterScroll.mainContent.text = mainContent.text;
+        
+        if(m != nil || m.alpha!=0){
+            [twitterScroll createImageWithImage:imageSelected.image];
+        }
+        [self addChildViewController:twitterScroll];
+        [socialScrollView addSubview:twitterScroll.view];
+        socialScrollView.contentSize = CGSizeMake(socialScrollView.contentSize.width+screenWidth, screenHeight);
+        pageControl.numberOfPages ++;
+        pageControl.currentPage = pageControl.numberOfPages+1;
+        [socialScrollView setContentOffset:CGPointMake(socialScrollView.contentSize.width-screenWidth, 0) animated:YES];
     }
-    [self addChildViewController:twitterScroll];
-    [socialScrollView addSubview:twitterScroll.view];
-    socialScrollView.contentSize = CGSizeMake(socialScrollView.contentSize.width+screenWidth, screenHeight);
-    pageControl.numberOfPages ++;
-    pageControl.currentPage = pageControl.numberOfPages+1;
-    [socialScrollView setContentOffset:CGPointMake(socialScrollView.contentSize.width-screenWidth, 0) animated:YES];
 }
 -(IBAction)tumblrCreateCompose:(id)sender{
+    NSUserDefaults *d = [NSUserDefaults standardUserDefaults];
+    NSString *t = [d objectForKey:@"tumblr_connect"];
+    if([t isEqualToString:@"no"]){
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Connection"
+                                                        message:@"Connect a Tumblr account from the settings page (on your profile)"
+                                                       delegate:nil
+                                              cancelButtonTitle:@"OK"
+                                              otherButtonTitles:nil];
+        [alert show];
+    }else{
     [mainContent resignFirstResponder];
     tumblr_icon.image = [UIImage imageNamed:@"tumblr_000000_100.png"];
     
@@ -261,11 +283,21 @@
     
     pageControl.numberOfPages ++;
     pageControl.currentPage = pageControl.numberOfPages+1;
-
+    }
     
 }
 
 -(IBAction)instagramCreateCompose:(id)sender{
+    NSUserDefaults *d = [NSUserDefaults standardUserDefaults];
+    NSString *t = [d objectForKey:@"instagram_connect"];
+    if([t isEqualToString:@"no"]){
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Connection"
+                                                        message:@"Connect an Instagram account from the settings page (on your profile)"
+                                                       delegate:nil
+                                              cancelButtonTitle:@"OK"
+                                              otherButtonTitles:nil];
+        [alert show];
+    }else{
     [mainContent resignFirstResponder];
     ig_icon.image = [UIImage imageNamed:@"instagram_000000_100.png"];
     
@@ -286,6 +318,7 @@
     [socialScrollView setContentOffset:CGPointMake(socialScrollView.contentSize.width-screenWidth, 0) animated:YES];
     pageControl.numberOfPages ++;
     pageControl.currentPage = pageControl.numberOfPages+1;
+    }
 }
 - (IBAction)cameraButtonTapped:(id)sender{
     if ([UIImagePickerController isSourceTypeAvailable:
@@ -343,8 +376,9 @@
     
     // Upload image
     NSData *imageData = UIImageJPEGRepresentation(image, 0.05f);
-    m = [[UIView alloc] initWithFrame:CGRectMake(10, mainCompose.frame.size.height+mainCompose.frame.origin.y+20, screenWidth-20, 300)];
-    imageSelected = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, screenWidth-20, 300)];
+    m = [[UIView alloc] initWithFrame:CGRectMake(10, mainCompose.frame.size.height+mainCompose.frame.origin.y+20, screenWidth-20, screenHeight-100)];
+
+    imageSelected = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, screenWidth-20, screenHeight-100)];
     imageSelected.image = smallImage;
     [m addSubview:imageSelected];
     [m setBackgroundColor:[UIColor whiteColor]];
@@ -363,6 +397,31 @@
     [xlabel addGestureRecognizer:t];
     
     [socialScrollView addSubview:m];
+    
+    NSString  *pngPath = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/feed_upload.png"];
+    NSString  *jpgPath = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents/feed_upload.jpg"];
+    
+    // Write a UIImage to JPEG with minimum compression (best quality)
+    // The value 'image' must be a UIImage object
+    // The value '1.0' represents image compression quality as value from 0.0 to 1.0
+//    [UIImageJPEGRepresentation(image, 1.0) writeToFile:jpgPath atomically:YES];
+    
+    // Write image to PNG
+    [UIImagePNGRepresentation(image) writeToFile:pngPath atomically:YES];
+    
+    // Let's check to see if files were successfully written...
+    
+    // Create file manager
+    NSError *error;
+    NSFileManager *fileMgr = [NSFileManager defaultManager];
+    
+    // Point to Document directory
+    NSString *documentsDirectory = [NSHomeDirectory() stringByAppendingPathComponent:@"Documents"];
+    
+    // Write out the contents of home directory to console
+    NSLog(@"Documents directory: %@", [fileMgr contentsOfDirectoryAtPath:documentsDirectory error:&error]);
+    UIImageWriteToSavedPhotosAlbum(imageSelected.image, nil, nil, nil);
+
     //    [self uploadImage:imageData];
 }
 -(void)xImage{
